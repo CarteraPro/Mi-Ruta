@@ -105,7 +105,6 @@ dd { margin: 0; font-size: 1.05rem; font-weight: 600; word-break: break-word; li
 .fila-datos > span { color: var(--suave); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fila-datos em { font-size: 0.75rem; color: var(--verde); font-style: normal; font-weight: 600; }
 .pos { display: inline-block; min-width: 2.2em; color: var(--verde); font-weight: 700; }
-.asa { width: 40px; align-self: stretch; border: none; background: none; font-size: 1.5rem; color: var(--suave); touch-action: none; cursor: grab; }
 .banda { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; margin: 8px 0 4px; border-radius: 8px; }
 .banda.inicio { background: var(--verde); color: #fff; }
 .banda.fin-v { background: #334155; color: #fff; margin: 4px 0 8px; }
@@ -179,3 +178,16 @@ dd { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
 .ubic-fila { display: flex; gap: 6px; justify-content: center; }
 .ubic-fila .pequeno { padding: 5px 10px; font-size: 0.8rem; }
 .ubic .enlace { padding: 2px 4px; text-align: center; font-size: 0.75rem; }
+
+/* modo mover: la fila resaltada se agranda y se desliza */
+.fila.moviendo { padding: 14px 4px; border: 2px solid var(--verde); box-shadow: 0 6px 18px rgba(15, 118, 110, 0.35); transform: scale(1.03); position: relative; z-index: 1; touch-action: none; cursor: grab; user-select: none; }
+.fila.moviendo.arrastrada { opacity: 0.9; cursor: grabbing; }
+.fila.moviendo .fila-datos { pointer-events: none; }
+.fila.moviendo .fila-datos strong { font-size: 1.15rem; }
+.fila.moviendo .fila-datos > span { font-size: 0.9rem; }
+.mover-icono { width: 44px; text-align: center; font-size: 1.8rem; color: var(--verde); font-weight: 800; }
+.panel-mover { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: #fff; border-top: 2px solid var(--verde); }
+.panel-mover label { font-size: 0.75rem; }
+.panel-mover input { margin-top: 2px; padding: 8px 10px; }
+.panel-mover .pequeno { padding: 10px 14px; }
+.panel-mover .grande { grid-column: 1 / -1; padding: 12px; }

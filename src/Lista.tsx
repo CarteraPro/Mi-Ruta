@@ -16,6 +16,8 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
   const [nuevo, setNuevo] = useState(false)
   const [arrastrando, setArrastrando] = useState<number | null>(null)
   const [destino, setDestino] = useState<number | null>(null)
+  const [moviendoId, setMoviendoId] = useState<number | null>(null) // usuario en "modo mover"
+  const [tick, setTick] = useState(0)
   const contRef = useRef<HTMLUListElement>(null)
   const yRef = useRef(0)
   const xRef = useRef(0)
@@ -38,7 +40,12 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
     contRef.current?.querySelector('.actual')?.scrollIntoView({ block: 'center' })
   }, [])
 
-  // --- arrastrar para reordenar (asa ≡) ---
+  // En modo mover, tras cada cambio de posición se centra al usuario movido.
+  useEffect(() => {
+    if (moviendoId !== null) contRef.current?.querySelector('.moviendo')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [moviendoId, tick])
+
+  // --- deslizar al usuario resaltado (modo mover) para reordenar ---
   useEffect(() => {
     if (arrastrando === null) return
     let raf = 0
@@ -80,11 +87,12 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
     setArrastrando(null)
     setDestino(null)
     if (desde !== null && hasta !== null) await moverCuenta(cuentasRef.current, desde, hasta)
+    setTick((n) => n + 1)
   }
 
   const menuCuenta = menuId !== null ? cuentas.find((c) => c.id === menuId) : undefined
   const menuIdx = menuCuenta ? cuentas.indexOf(menuCuenta) : -1
-  const puedeArrastrar = !t
+  const idxMoviendo = moviendoId !== null ? cuentas.findIndex((c) => c.id === moviendoId) : -1
 
   return (
     <div className="modal">
@@ -99,7 +107,13 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
           <button className="pequeno" onClick={() => setNuevo(true)}>
             ＋ Nuevo usuario
           </button>
-          <span>{t ? `${visibles.length} resultados` : `${cuentas.length} usuarios · arrastra ≡ para ordenar`}</span>
+          <span>
+            {moviendoId !== null
+              ? 'Desliza el usuario resaltado o escribe su posición'
+              : t
+                ? `${visibles.length} resultados`
+                : `${cuentas.length} usuarios · ⋮ → Mover para reordenar`}
+          </span>
         </div>
 
         <ul className="resultados" ref={contRef}>
@@ -114,22 +128,17 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                     'fila' +
                     (c.color ? ` c-${c.color}` : '') +
                     (c.id === actualId ? ' actual' : '') +
+                    (c.id === moviendoId ? ' moviendo' : '') +
                     (arrastrando === i ? ' arrastrada' : '') +
                     (arrastrando !== null && destino === i && arrastrando !== i ? (arrastrando < i ? ' sobre-abajo' : ' sobre-arriba') : '')
                   }
+                  {...(c.id === moviendoId && {
+                    onPointerDown: (e: React.PointerEvent) => empezar(e, i),
+                    onPointerMove: mover,
+                    onPointerUp: soltar,
+                    onPointerCancel: soltar,
+                  })}
                 >
-                  {puedeArrastrar && (
-                    <button
-                      className="asa"
-                      aria-label="Arrastrar para reordenar"
-                      onPointerDown={(e) => empezar(e, i)}
-                      onPointerMove={mover}
-                      onPointerUp={soltar}
-                      onPointerCancel={soltar}
-                    >
-                      ≡
-                    </button>
-                  )}
                   <button className="fila-datos" onClick={() => onIr(c.id!)}>
                     <strong>
                       <span className="pos">{i + 1}</span> {c.nombre || '(sin nombre)'}
@@ -141,9 +150,15 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                     </span>
                     {distinta(v, c.direccion) && <em>Vereda: {v}</em>}
                   </button>
-                  <button className="icono" aria-label="Opciones" onClick={() => setMenuId(c.id!)}>
-                    ⋮
-                  </button>
+                  {c.id === moviendoId ? (
+                    <span className="mover-icono" aria-hidden>
+                      ⇅
+                    </span>
+                  ) : (
+                    <button className="icono" aria-label="Opciones" onClick={() => setMenuId(c.id!)}>
+                      ⋮
+                    </button>
+                  )}
                 </div>
                 {c.finVereda && <div className="banda fin-v">■ Fin de vereda</div>}
               </li>
@@ -151,6 +166,19 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
           })}
           {!visibles.length && <li className="fin">Sin resultados</li>}
         </ul>
+
+        {idxMoviendo >= 0 && (
+          <PanelMover
+            key={idxMoviendo}
+            posicion={idxMoviendo}
+            total={cuentas.length}
+            onIr={async (pos) => {
+              await moverCuenta(cuentas, idxMoviendo, pos)
+              setTick((n) => n + 1)
+            }}
+            onListo={() => setMoviendoId(null)}
+          />
+        )}
       </div>
 
       {menuCuenta && (
@@ -159,8 +187,9 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
           posicion={menuIdx}
           total={cuentas.length}
           onCerrar={() => setMenuId(null)}
-          onMover={async (pos) => {
-            await moverCuenta(cuentas, menuIdx, pos)
+          onMover={() => {
+            setQ('') // el modo mover necesita la lista completa
+            setMoviendoId(menuCuenta.id!)
             setMenuId(null)
           }}
           onEliminar={async () => {
@@ -186,6 +215,45 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
   )
 }
 
+// Barra inferior del modo mover: ir a una posición por número (para distancias largas) o terminar.
+function PanelMover({
+  posicion,
+  total,
+  onIr,
+  onListo,
+}: {
+  posicion: number
+  total: number
+  onIr: (pos: number) => void
+  onListo: () => void
+}) {
+  const [pos, setPos] = useState(String(posicion + 1))
+  const ir = () => onIr(Math.max(0, Math.min(total - 1, (parseInt(pos, 10) || 1) - 1)))
+
+  return (
+    <div className="panel-mover">
+      <label>
+        Ir a la posición (1–{total})
+        <input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={total}
+          value={pos}
+          onChange={(e) => setPos(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && ir()}
+        />
+      </label>
+      <button className="pequeno" onClick={ir}>
+        Mover
+      </button>
+      <button className="grande primario" onClick={onListo}>
+        Listo
+      </button>
+    </div>
+  )
+}
+
 function Opciones({
   cuenta,
   posicion,
@@ -198,11 +266,10 @@ function Opciones({
   posicion: number
   total: number
   onCerrar: () => void
-  onMover: (pos: number) => void
+  onMover: () => void
   onEliminar: () => void
 }) {
   const [vereda, setVereda] = useState(cuenta.inicioVereda ?? cuenta.direccion)
-  const [pos, setPos] = useState(String(posicion + 1))
   const guardar = (c: Partial<Cuenta>) => db.cuentas.update(cuenta.id!, c)
   const pintar = (color: Color | undefined) => guardar({ color })
 
@@ -260,16 +327,10 @@ function Opciones({
           </button>
         </div>
 
-        <div className="hoja-tit">Mover a la posición</div>
-        <div className="hoja-fila">
-          <input type="number" inputMode="numeric" min={1} max={total} value={pos} onChange={(e) => setPos(e.target.value)} />
-          <button
-            className="pequeno"
-            onClick={() => onMover(Math.max(0, Math.min(total - 1, (parseInt(pos, 10) || 1) - 1)))}
-          >
-            Mover
-          </button>
-        </div>
+        <div className="hoja-tit">Posición {posicion + 1} de {total}</div>
+        <button className="pequeno" onClick={onMover}>
+          ↕ Mover
+        </button>
 
         <button
           className="pequeno peligro-b"
