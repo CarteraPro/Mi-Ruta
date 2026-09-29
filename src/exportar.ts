@@ -17,12 +17,21 @@ export async function exportarRuta(rutaId: number) {
   const cuentas = await db.cuentas.where('[rutaId+orden]').between([rutaId, 0], [rutaId, Infinity]).toArray()
 
   const operador = operadorDe(ruta.nombre)
+  // X = longitud y Y = latitud (convención de coordenadas); quedan vacías si el usuario no tiene ubicación.
   const filas = [
-    ['Operador', 'NIU', 'MEDIDOR', 'NOMBRE', 'DIRECCION_FACTURACION'],
-    ...cuentas.map((c) => [operador, comoCelda(c.niu), comoCelda(c.medidor), c.nombre, c.direccion]),
+    ['Operador', 'NIU', 'MEDIDOR', 'NOMBRE', 'DIRECCION_FACTURACION', 'X', 'Y'],
+    ...cuentas.map((c) => [
+      operador,
+      comoCelda(c.niu),
+      comoCelda(c.medidor),
+      c.nombre,
+      c.direccion,
+      c.lng ?? '',
+      c.lat ?? '',
+    ]),
   ]
   const hoja = XLSX.utils.aoa_to_sheet(filas)
-  hoja['!cols'] = [{ wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 40 }, { wch: 36 }]
+  hoja['!cols'] = [{ wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 40 }, { wch: 36 }, { wch: 14 }, { wch: 14 }]
   const libro = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(libro, hoja, 'Hoja1')
 
