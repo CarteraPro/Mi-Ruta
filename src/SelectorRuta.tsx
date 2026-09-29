@@ -5,6 +5,7 @@ import { importarExcel, leerFilas } from './importar'
 import { aplicarPlan, deshacerActualizacion, planificar, type Plan } from './actualizar'
 import Resumen from './Resumen'
 import { bloquear } from './Acceso'
+import { exportarRuta } from './exportar'
 
 const fechaCorta = (t: number) => new Date(t).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 
@@ -91,6 +92,16 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
     }
   }
 
+  const exportar = async (id: number) => {
+    setError('')
+    try {
+      const r = await exportarRuta(id)
+      setAviso(`Excel exportado: ${r.archivo} (${r.total} usuarios).`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo exportar')
+    }
+  }
+
   const eliminar = async (id: number, nombre: string) => {
     if (confirm(`¿Eliminar la ruta "${nombre}" con todas sus fotos y datos? No se puede deshacer.`)) {
       await borrarRuta(id)
@@ -111,6 +122,9 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
               <button className="ruta-abrir" onClick={() => onElegir(r.id!)}>
                 <strong>{r.nombre}</strong>
                 <span>{r.total} cuentas</span>
+              </button>
+              <button className="icono" aria-label="Exportar a Excel" disabled={cargando} onClick={() => exportar(r.id!)}>
+                ⬇
               </button>
               <button
                 className="icono"

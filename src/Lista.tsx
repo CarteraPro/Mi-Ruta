@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, moverCuenta, agregarCuenta, eliminarCuenta, type Color, type Cuenta } from './db'
 import { COLORES, distinta, esNuevo, veredasDerivadas } from './util'
+import { exportarRuta } from './exportar'
 
 interface Props {
   rutaId: number
@@ -106,6 +107,9 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
         <div className="lista-barra">
           <button className="pequeno" onClick={() => setNuevo(true)}>
             ＋ Nuevo usuario
+          </button>
+          <button className="pequeno" onClick={() => exportarRuta(rutaId).catch(() => alert('No se pudo exportar'))}>
+            ⬇ Excel
           </button>
           <span>
             {moviendoId !== null
