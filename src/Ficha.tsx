@@ -6,8 +6,8 @@ import Visor from './Visor'
 
 const ESTADOS: { valor: Estado; texto: string }[] = [
   { valor: 'normal', texto: 'Normal' },
-  { valor: 'casa_desocupada', texto: '🏚 Casa desocupada' },
-  { valor: 'local_desocupado', texto: '🏪 Local desocupado' },
+  { valor: 'casa_desocupada', texto: '🏚 Casa desoc.' },
+  { valor: 'local_desocupado', texto: '🏪 Local desoc.' },
 ]
 
 export default function Ficha({ cuenta }: { cuenta: Cuenta }) {
@@ -31,36 +31,32 @@ export default function Ficha({ cuenta }: { cuenta: Cuenta }) {
         </dl>
       </section>
 
-      <section className="bloque">
-        <div className="chips">
-          {ESTADOS.map((e) => (
-            <button
-              key={e.valor}
-              className={'chip' + (cuenta.estado === e.valor ? ' activo' : '')}
-              onClick={() => guardar({ estado: e.valor })}
-            >
-              {e.texto}
-            </button>
-          ))}
-        </div>
-      </section>
+      <div className="chips">
+        {ESTADOS.map((e) => (
+          <button
+            key={e.valor}
+            className={'chip' + (cuenta.estado === e.valor ? ' activo' : '')}
+            onClick={() => guardar({ estado: e.valor })}
+          >
+            {e.texto}
+          </button>
+        ))}
+      </div>
 
-      <section className="bloque">
-        <label>
-          Promedio de consumo
+      <div className="fila2">
+        <label className="bloque">
+          Promedio consumo
           <TextoGuardado valor={cuenta.promedio} inputMode="decimal" placeholder="kWh" onGuardar={(v) => guardar({ promedio: v })} />
         </label>
-      </section>
+        <Ubicacion cuenta={cuenta} onGuardar={guardar} />
+      </div>
 
-      <Ubicacion cuenta={cuenta} onGuardar={guardar} />
       <Fotos cuenta={cuenta} />
 
-      <section className="bloque">
-        <label>
-          Notas
-          <TextoGuardado multilinea valor={cuenta.nota} placeholder="Ej: perros en la entrada, medidor interno…" onGuardar={(v) => guardar({ nota: v })} />
-        </label>
-      </section>
+      <label className="bloque notas">
+        Notas
+        <TextoGuardado multilinea valor={cuenta.nota} placeholder="Ej: perros en la entrada…" onGuardar={(v) => guardar({ nota: v })} />
+      </label>
     </article>
   )
 }
@@ -98,7 +94,7 @@ function TextoGuardado({
   useEffect(() => volcar, []) // guarda al cambiar de cuenta
 
   return multilinea ? (
-    <textarea rows={3} value={v} placeholder={rest.placeholder} onChange={(e) => cambiar(e.target.value)} onBlur={volcar} />
+    <textarea value={v} placeholder={rest.placeholder} onChange={(e) => cambiar(e.target.value)} onBlur={volcar} />
   ) : (
     <input {...rest} value={v} onChange={(e) => cambiar(e.target.value)} onBlur={volcar} />
   )
@@ -127,25 +123,18 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
 
   const tiene = cuenta.lat !== undefined && cuenta.lng !== undefined
   return (
-    <section className="bloque">
-      <div className="fila-titulo">
-        <span>Ubicación</span>
-        <button className="pequeno" disabled={buscando} onClick={capturar}>
-          {buscando ? 'Buscando GPS…' : tiene ? '📍 Actualizar' : '📍 Guardar ubicación'}
-        </button>
-      </div>
+    <div className="bloque ubic">
+      <button className="pequeno" disabled={buscando} onClick={capturar}>
+        {buscando ? 'Buscando GPS…' : tiene ? '📍 Actualizar' : '📍 Ubicación'}
+      </button>
       {tiene && (
-        <p className="coords">
-          {cuenta.lat!.toFixed(6)}, {cuenta.lng!.toFixed(6)}
-          {cuenta.precision !== undefined && ` (±${Math.round(cuenta.precision)} m)`}
-          {' · '}
-          <a href={`https://www.google.com/maps?q=${cuenta.lat},${cuenta.lng}`} target="_blank" rel="noreferrer">
-            Ver en mapa
-          </a>
-        </p>
+        <a className="coords" href={`https://www.google.com/maps?q=${cuenta.lat},${cuenta.lng}`} target="_blank" rel="noreferrer">
+          {cuenta.lat!.toFixed(5)}, {cuenta.lng!.toFixed(5)}
+          {cuenta.precision !== undefined && ` ±${Math.round(cuenta.precision)}m`}
+        </a>
       )}
-      {error && <p className="error">{error}</p>}
-    </section>
+      {error && <span className="error">{error}</span>}
+    </div>
   )
 }
 
@@ -178,19 +167,16 @@ function Fotos({ cuenta }: { cuenta: Cuenta }) {
   }
 
   return (
-    <section className="bloque">
-      <div className="fila-titulo">
-        <span>Fotos {fotos?.length ? `(${fotos.length})` : ''}</span>
-        <button className="pequeno" onClick={() => inputRef.current?.click()}>
-          📷 Agregar foto
-        </button>
-        <input ref={inputRef} type="file" accept="image/*" capture="environment" multiple hidden onChange={(e) => agregar(e.target.files)} />
-      </div>
-      {error && <p className="error">{error}</p>}
+    <section className="bloque fotos">
+      <button className="pequeno" onClick={() => inputRef.current?.click()}>
+        📷 Foto{fotos?.length ? ` (${fotos.length})` : ''}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" multiple hidden onChange={(e) => agregar(e.target.files)} />
       <div className="miniaturas">
         {fotos?.map((f, i) => (
           <Miniatura key={f.id} blob={f.blob} onClick={() => setVisor(i)} />
         ))}
+        {error && <span className="error">{error}</span>}
       </div>
       {visor !== null && fotos?.[visor] && (
         <Visor blob={fotos[visor].blob} onCerrar={() => setVisor(null)} onEliminar={() => quitar(fotos[visor].id!)} />
