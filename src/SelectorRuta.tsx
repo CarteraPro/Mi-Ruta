@@ -6,6 +6,8 @@ import { aplicarPlan, deshacerActualizacion, planificar, type Plan } from './act
 import Resumen from './Resumen'
 import { bloquear } from './Acceso'
 import { exportarRuta } from './exportar'
+import { importarRespaldo, infoFotos, leerManifiesto } from './respaldo'
+import RespaldoRuta from './RespaldoRuta'
 
 const fechaCorta = (t: number) => new Date(t).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 
@@ -27,6 +29,8 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [plan, setPlan] = useState<{ plan: Plan; ruta: string } | null>(null)
+  const [respaldo, setRespaldo] = useState<{ id: number; nombre: string } | null>(null)
+  const respaldoRef = useRef<HTMLInputElement>(null)
 
   const subir = async (file: File | undefined) => {
     if (!file) return
@@ -102,6 +106,36 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
     }
   }
 
+  // Importar un respaldo: se muestra qué trae y, si ya existe una ruta con el mismo nombre, se avisa que se reemplaza.
+  const revisarRespaldo = async (file: File | undefined) => {
+    if (respaldoRef.current) respaldoRef.current.value = ''
+    if (!file) return
+    setError('')
+    setAviso('')
+    setCargando(true)
+    try {
+      const m = await leerManifiesto(file)
+      const existente = (await db.rutas.toArray()).find((r) => r.nombre.trim().toLowerCase() === m.ruta.nombre.trim().toLowerCase())
+      let texto = `Respaldo de "${m.ruta.nombre}" (${fechaCorta(m.exportada)}): ${m.cuentas.length} usuarios, ${m.fotos.length ? `${m.fotos.length} fotos` : 'sin fotos'}.\n\n`
+      if (existente) {
+        const actuales = await infoFotos(existente.id!)
+        const total = await db.cuentas.where('rutaId').equals(existente.id!).count()
+        texto += `Ya tienes una ruta "${existente.nombre}" (${total} usuarios, ${actuales.n} fotos). Se REEMPLAZARÁ por completo con este respaldo; no se fusionan.`
+        if (!m.fotos.length && actuales.n) texto += `\n\n⚠ Este respaldo no trae fotos: se perderán las ${actuales.n} fotos de tu ruta actual.`
+      } else {
+        texto += 'Se agregará como una ruta nueva.'
+      }
+      if (!confirm(texto + '\n\n¿Continuar?')) return
+      const r = await importarRespaldo(file, m, setAviso)
+      setAviso(`Respaldo importado: ${r.cuentas} usuarios${r.fotos ? `, ${r.fotos} fotos` : ''}${r.reemplazada ? ' (reemplazó la ruta anterior)' : ''}.`)
+    } catch (e) {
+      setAviso('')
+      setError(e instanceof Error ? e.message : 'No se pudo importar el respaldo')
+    } finally {
+      setCargando(false)
+    }
+  }
+
   const eliminar = async (id: number, nombre: string) => {
     if (confirm(`¿Eliminar la ruta "${nombre}" con todas sus fotos y datos? No se puede deshacer.`)) {
       await borrarRuta(id)
@@ -123,11 +157,16 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
                 <strong>{r.nombre}</strong>
                 <span>{r.total} cuentas</span>
               </button>
-              <button className="icono" aria-label="Exportar a Excel" disabled={cargando} onClick={() => exportar(r.id!)}>
-                ⬇
+            </div>
+            <div className="ruta-acciones">
+              <button className="accion" aria-label="Exportar a Excel" disabled={cargando} onClick={() => exportar(r.id!)}>
+                ⬇ Excel
+              </button>
+              <button className="accion" aria-label="Respaldo para otro celular" disabled={cargando} onClick={() => setRespaldo({ id: r.id!, nombre: r.nombre })}>
+                📦 Respaldo
               </button>
               <button
-                className="icono"
+                className="accion"
                 aria-label="Actualizar con un Excel nuevo"
                 disabled={cargando}
                 onClick={() => {
@@ -135,9 +174,9 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
                   actualizarRef.current?.click()
                 }}
               >
-                🔄
+                🔄 Actualizar
               </button>
-              <button className="icono peligro" aria-label="Eliminar ruta" onClick={() => eliminar(r.id!, r.nombre)}>
+              <button className="accion peligro" aria-label="Eliminar ruta" onClick={() => eliminar(r.id!, r.nombre)}>
                 🗑
               </button>
             </div>
@@ -164,8 +203,12 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
         hidden
         onChange={(e) => revisarActualizacion(e.target.files?.[0])}
       />
+      <input ref={respaldoRef} type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden onChange={(e) => revisarRespaldo(e.target.files?.[0])} />
       <button className="grande primario" disabled={cargando} onClick={() => inputRef.current?.click()}>
         {cargando ? 'Cargando…' : rutas?.length ? '＋ Cargar otra ruta (Excel)' : '📂 Cargar Excel'}
+      </button>
+      <button className="grande" disabled={cargando} onClick={() => respaldoRef.current?.click()}>
+        📥 Importar respaldo de otro celular
       </button>
       <p className="ayuda">
         Solo se leen las columnas NIU, NOMBRE, MEDIDOR y DIRECCION_FACTURACION.
@@ -177,6 +220,8 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
       <button className="enlace" onClick={bloquear}>
         🔒 Bloquear la app
       </button>
+
+      {respaldo && <RespaldoRuta ruta={respaldo} onCerrar={() => setRespaldo(null)} />}
 
       {plan && <Resumen plan={plan.plan} ruta={plan.ruta} ocupado={cargando} onCancelar={() => setPlan(null)} onAplicar={aplicar} />}
     </main>

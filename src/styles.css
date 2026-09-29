@@ -216,3 +216,15 @@ img { pointer-events: auto; }
 
 /* los botones de captura de ubicación no deben ser interrumpidos por gestos del sistema durante la pulsación larga */
 .ubic button { touch-action: none; -webkit-user-select: none; user-select: none; }
+
+/* acciones de cada ruta, debajo del nombre */
+.ruta-acciones { display: flex; gap: 6px; padding: 4px 2px 8px; }
+.accion { flex: 1; min-height: 40px; padding: 4px 6px; border-radius: 10px; border: 1px solid var(--borde); background: #fff; font-size: 0.8rem; font-weight: 600; color: var(--verde); }
+.accion:last-child { flex: none; width: 44px; }
+.accion.peligro { color: var(--rojo); }
+
+/* pantallas con listas (rutas, contraseña): se pueden desplazar si el contenido no cabe; la ficha del recorrido no */
+.pantalla { height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.pantalla.centrada { justify-content: flex-start; }
+.pantalla.centrada > :first-child { margin-top: auto; }
+.pantalla.centrada > :last-child { margin-bottom: auto; }
