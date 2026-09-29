@@ -5,6 +5,9 @@ import { comprimirFoto } from './imagen'
 import Visor from './Visor'
 import { esNuevo } from './util'
 
+// La ubicación se guarda sola cuando el GPS tiene una precisión mejor (menor) a este valor, en metros.
+const PRECISION_MAX = 6
+
 const ESTADOS: { valor: Estado; texto: string }[] = [
   { valor: 'normal', texto: 'Normal' },
   { valor: 'casa_desocupada', texto: '🏚 Casa desoc.' },
@@ -116,36 +119,89 @@ function TextoGuardado({
 
 function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Partial<Cuenta>) => void }) {
   const [buscando, setBuscando] = useState(false)
+  const [lectura, setLectura] = useState<GeolocationCoordinates | null>(null) // mejor lectura mientras busca
+  const [segundos, setSegundos] = useState(0)
   const [error, setError] = useState('')
+  const watchId = useRef<number | null>(null)
 
+  const detener = () => {
+    if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current)
+    watchId.current = null
+    setBuscando(false)
+  }
+  useEffect(() => detener, []) // al cambiar de cuenta se corta la búsqueda
+
+  const guardar = (c: GeolocationCoordinates) => {
+    onGuardar({ lat: c.latitude, lng: c.longitude, precision: c.accuracy, ubicadoEn: Date.now() })
+    detener()
+    setLectura(null)
+  }
+
+  // Sigue el GPS y guarda sola la ubicación cuando la precisión baja de PRECISION_MAX metros.
   const capturar = () => {
     setError('')
     if (!navigator.geolocation) return setError('Este dispositivo no permite ubicación')
+    setLectura(null)
+    setSegundos(0)
     setBuscando(true)
-    navigator.geolocation.getCurrentPosition(
+    watchId.current = navigator.geolocation.watchPosition(
       (p) => {
-        onGuardar({ lat: p.coords.latitude, lng: p.coords.longitude, precision: p.coords.accuracy, ubicadoEn: Date.now() })
-        setBuscando(false)
+        setLectura(p.coords)
+        if (p.coords.accuracy < PRECISION_MAX) guardar(p.coords)
       },
       (e) => {
-        setError(e.code === 1 ? 'Permiso de ubicación denegado' : 'No se pudo obtener la ubicación')
-        setBuscando(false)
+        if (e.code === 1) {
+          setError('Permiso de ubicación denegado')
+          detener()
+        }
+        // otros errores (sin señal momentánea): sigue esperando
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 },
     )
   }
 
+  useEffect(() => {
+    if (!buscando) return
+    const t = window.setInterval(() => setSegundos((s) => s + 1), 1000)
+    return () => window.clearInterval(t)
+  }, [buscando])
+
   const tiene = cuenta.lat !== undefined && cuenta.lng !== undefined
+  const mapa = tiene ? `https://www.google.com/maps/search/?api=1&query=${cuenta.lat},${cuenta.lng}` : ''
+
   return (
     <div className="bloque ubic">
-      <button className="pequeno" disabled={buscando} onClick={capturar}>
-        {buscando ? 'Buscando GPS…' : tiene ? '📍 Actualizar' : '📍 Ubicación'}
-      </button>
-      {tiene && (
-        <a className="coords" href={`https://www.google.com/maps?q=${cuenta.lat},${cuenta.lng}`} target="_blank" rel="noreferrer">
-          {cuenta.lat!.toFixed(5)}, {cuenta.lng!.toFixed(5)}
-          {cuenta.precision !== undefined && ` ±${Math.round(cuenta.precision)}m`}
-        </a>
+      {buscando ? (
+        <>
+          <span className="buscando">
+            Buscando GPS… {lectura ? `±${lectura.accuracy.toFixed(1)} m` : `${segundos}s`}
+            <small> (meta: menos de {PRECISION_MAX} m)</small>
+          </span>
+          <div className="ubic-fila">
+            <button className="pequeno" onClick={detener}>
+              Cancelar
+            </button>
+            {lectura && segundos >= 20 && (
+              <button className="pequeno" onClick={() => guardar(lectura)}>
+                Guardar así
+              </button>
+            )}
+          </div>
+        </>
+      ) : tiene ? (
+        <>
+          <a className="pequeno enlace-mapa" href={mapa} target="_blank" rel="noreferrer">
+            📍 Ver en Maps
+            {cuenta.precision !== undefined && <small> ±{cuenta.precision.toFixed(1)} m</small>}
+          </a>
+          <button className="enlace" onClick={capturar}>
+            ↻ Volver a capturar
+          </button>
+        </>
+      ) : (
+        <button className="pequeno" onClick={capturar}>
+          📍 Capturar ubicación
+        </button>
       )}
       {error && <span className="error">{error}</span>}
     </div>

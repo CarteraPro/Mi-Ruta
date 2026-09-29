@@ -169,3 +169,13 @@ dd { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
 .hoja-fila .grande { flex: 1; padding: 12px; }
 
 .acceso { display: flex; flex-direction: column; gap: 12px; }
+
+/* ubicación */
+.ubic { gap: 2px; }
+.enlace-mapa { display: block; text-align: center; text-decoration: none; }
+.enlace-mapa small, .buscando small { font-weight: 500; opacity: 0.8; }
+.buscando { font-size: 0.8rem; font-weight: 700; color: var(--verde); text-align: center; line-height: 1.2; }
+.buscando small { display: block; font-size: 0.7rem; }
+.ubic-fila { display: flex; gap: 6px; justify-content: center; }
+.ubic-fila .pequeno { padding: 5px 10px; font-size: 0.8rem; }
+.ubic .enlace { padding: 2px 4px; text-align: center; font-size: 0.75rem; }
