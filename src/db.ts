@@ -125,8 +125,13 @@ export async function agregarCuenta(
   })
 }
 
+// Solo se pueden eliminar usuarios que agregó el propio liniero y que no aparecen en ningún listado cargado.
+export const puedeEliminar = (c: Cuenta) => !!c.manual
+
 export async function eliminarCuenta(cuentas: Cuenta[], id: number) {
   await db.transaction('rw', db.cuentas, db.fotos, async () => {
+    const cuenta = await db.cuentas.get(id)
+    if (!cuenta || !puedeEliminar(cuenta)) throw new Error('Este usuario viene del listado y no se puede eliminar')
     await db.fotos.where('cuentaId').equals(id).delete()
     await db.cuentas.delete(id)
     await reescribirOrden(cuentas.filter((c) => c.id !== id))

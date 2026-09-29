@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { db, moverCuenta, agregarCuenta, eliminarCuenta, type Color, type Cuenta } from './db'
+import { db, moverCuenta, agregarCuenta, eliminarCuenta, puedeEliminar, type Color, type Cuenta } from './db'
 import { COLORES, distinta, esNuevo, veredasDerivadas } from './util'
 import { exportarRuta } from './exportar'
 
@@ -336,14 +336,18 @@ function Opciones({
           ↕ Mover
         </button>
 
-        <button
-          className="pequeno peligro-b"
-          onClick={() => {
-            if (confirm(`¿Eliminar a "${cuenta.nombre || cuenta.niu}" con sus fotos? No se puede deshacer.`)) onEliminar()
-          }}
-        >
-          🗑 Eliminar usuario
-        </button>
+        {puedeEliminar(cuenta) ? (
+          <button
+            className="pequeno peligro-b"
+            onClick={() => {
+              if (confirm(`¿Eliminar a "${cuenta.nombre || cuenta.niu}" con sus fotos? No se puede deshacer.`)) onEliminar()
+            }}
+          >
+            🗑 Eliminar usuario
+          </button>
+        ) : (
+          <p className="ayuda">Este usuario viene del listado de la empresa y no se puede eliminar.</p>
+        )}
       </div>
     </div>
   )

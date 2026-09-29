@@ -30,7 +30,8 @@ export default function Resumen({
   onCancelar: () => void
   onAplicar: () => void
 }) {
-  const hayCambios = plan.nuevas.length + plan.cambios.length + plan.anuladas.length + plan.reactivadas.length > 0
+  const hayCambios =
+    plan.nuevas.length + plan.cambios.length + plan.anuladas.length + plan.reactivadas.length + plan.absorbidas.length > 0
 
   return (
     <div className="hoja-fondo">
@@ -73,6 +74,14 @@ export default function Resumen({
 
         <Seccion titulo="🚫 Matrículas que se marcan ANULADAS (ya no vienen)" total={plan.anuladas.length}>
           {plan.anuladas.slice(0, LIMITE).map((c) => (
+            <li key={c.id}>
+              <strong>{c.nombre || '(sin nombre)'}</strong> · NIU {c.niu}
+            </li>
+          ))}
+        </Seccion>
+
+        <Seccion titulo="📌 Agregados por ti que ya vienen en el listado (ya no se podrán eliminar)" total={plan.absorbidas.length}>
+          {plan.absorbidas.slice(0, LIMITE).map((c) => (
             <li key={c.id}>
               <strong>{c.nombre || '(sin nombre)'}</strong> · NIU {c.niu}
             </li>

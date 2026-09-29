@@ -159,19 +159,36 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
   const [manual, setManual] = useState(false)
   const temporizador = useRef<number | undefined>(undefined)
   const fueLargo = useRef(false)
-  const cancelarPulsacion = () => window.clearTimeout(temporizador.current)
+  const inicioPulsacion = useRef<{ x: number; y: number } | null>(null)
+  const cancelarPulsacion = () => {
+    window.clearTimeout(temporizador.current)
+    inicioPulsacion.current = null
+  }
   useEffect(() => cancelarPulsacion, [])
+  // Para que el sistema no interrumpa la pulsación sostenida: el puntero queda "capturado" por el botón
+  // (con touch-action: none en el CSS), y pointercancel/touchcancel se ignoran a propósito, porque algunos Android
+  // los disparan al empezar una pulsación larga. El final real lo marcan pointerup / touchend, o mover el dedo.
   const pulsacion = {
-    onPointerDown: () => {
+    onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
       fueLargo.current = false
+      inicioPulsacion.current = { x: e.clientX, y: e.clientY }
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      } catch {
+        /* sin captura: sigue funcionando con los eventos normales */
+      }
+      window.clearTimeout(temporizador.current)
       temporizador.current = window.setTimeout(() => {
         fueLargo.current = true
         setManual(true)
       }, 2000)
     },
+    onPointerMove: (e: React.PointerEvent) => {
+      const o = inicioPulsacion.current
+      if (o && Math.hypot(e.clientX - o.x, e.clientY - o.y) > 20) cancelarPulsacion() // el dedo se movió: no es pulsación
+    },
     onPointerUp: cancelarPulsacion,
-    onPointerLeave: cancelarPulsacion,
-    onPointerCancel: cancelarPulsacion,
+    onTouchEnd: cancelarPulsacion,
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     onClick: () => {
       if (fueLargo.current) fueLargo.current = false

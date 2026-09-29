@@ -17,6 +17,7 @@ export interface Plan {
   nuevas: { cuenta: Cuenta; ubicacion: string }[]
   anuladas: Cuenta[]
   reactivadas: Cuenta[]
+  absorbidas: Cuenta[] // agregadas a mano que ahora sí vienen en el listado (dejan de poder eliminarse)
   resultado: Cuenta[] // orden final de la ruta (las nuevas aún sin id)
 }
 
@@ -32,6 +33,7 @@ export function planificar(rutaId: number, cuentas: Cuenta[], filas: FilaExcel[]
   const idxNuevas: number[] = []
   const cambios: Plan['cambios'] = []
   const reactivadas: Cuenta[] = []
+  const absorbidas: Cuenta[] = []
   let sinCambio = 0
 
   filas.forEach((f, i) => {
@@ -41,8 +43,9 @@ export function planificar(rutaId: number, cuentas: Cuenta[], filas: FilaExcel[]
     // un valor vacío en el Excel no borra lo que ya se tenía
     const diffs = CAMPOS.filter((k) => f[k] && f[k] !== c[k]).map((k) => ({ campo: k, antes: c[k], despues: f[k] }))
     if (c.anulada) reactivadas.push(c)
+    if (c.manual) absorbidas.push(c)
     if (diffs.length) cambios.push({ cuenta: c, diffs })
-    else if (!c.anulada) sinCambio++
+    else if (!c.anulada && !c.manual) sinCambio++
   })
 
   const anuladas = [...cola.values()].flat().filter((c) => !c.manual && !c.anulada)
@@ -75,7 +78,7 @@ export function planificar(rutaId: number, cuentas: Cuenta[], filas: FilaExcel[]
     nuevas.push({ cuenta, ubicacion })
   }
 
-  return { rutaId, omitidas, sinCambio, cambios, nuevas, anuladas, reactivadas, resultado }
+  return { rutaId, omitidas, sinCambio, cambios, nuevas, anuladas, reactivadas, absorbidas, resultado }
 }
 
 export async function aplicarPlan(plan: Plan) {
@@ -90,6 +93,8 @@ export async function aplicarPlan(plan: Plan) {
     }
     for (const c of plan.anuladas) await db.cuentas.update(c.id!, { anulada: true })
     for (const c of plan.reactivadas) await db.cuentas.update(c.id!, { anulada: undefined })
+    // ya vienen en el listado: dejan de ser "agregadas a mano" y no se podrán eliminar
+    for (const c of plan.absorbidas) await db.cuentas.update(c.id!, { manual: undefined })
     for (const { cuenta } of plan.nuevas) cuenta.id = await db.cuentas.add(cuenta)
     await reescribirOrden(plan.resultado)
   })

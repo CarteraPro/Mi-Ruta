@@ -213,3 +213,6 @@ html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout
 input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 a, img, button { -webkit-touch-callout: none; -webkit-user-drag: none; }
 img { pointer-events: auto; }
+
+/* los botones de captura de ubicación no deben ser interrumpidos por gestos del sistema durante la pulsación larga */
+.ubic button { touch-action: none; -webkit-user-select: none; user-select: none; }
