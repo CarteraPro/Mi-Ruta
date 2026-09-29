@@ -207,3 +207,9 @@ dd { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
   .ubic .pequeno, .fotos .pequeno { padding: 5px 8px; font-size: 0.8rem; }
   .ubic { padding: 4px 6px; }
 }
+
+/* sin selección de texto ni menús nativos al mantener presionado; solo se puede seleccionar dentro de los campos */
+html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+a, img, button { -webkit-touch-callout: none; -webkit-user-drag: none; }
+img { pointer-events: auto; }
