@@ -131,13 +131,17 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
   }
   useEffect(() => detener, []) // al cambiar de cuenta se corta la búsqueda
 
+  // Si ya hay una lectura de GPS guardada, la nueva debe ser igual o mejor (menor o igual) para reemplazarla.
+  const previa = cuenta.ubicManual ? undefined : cuenta.precision
+  const mejoraPrevia = (a: number) => previa === undefined || a <= previa
+
   const guardar = (c: GeolocationCoordinates) => {
-    onGuardar({ lat: c.latitude, lng: c.longitude, precision: c.accuracy, ubicadoEn: Date.now() })
+    onGuardar({ lat: c.latitude, lng: c.longitude, precision: c.accuracy, ubicManual: undefined, ubicadoEn: Date.now() })
     detener()
     setLectura(null)
   }
 
-  // Sigue el GPS y guarda sola la ubicación cuando la precisión baja de PRECISION_MAX metros.
+  // Sigue el GPS y guarda sola la ubicación cuando la precisión baja de PRECISION_MAX metros (y no empeora la anterior).
   const capturar = () => {
     setError('')
     if (!navigator.geolocation) return setError('Este dispositivo no permite ubicación')
@@ -147,7 +151,7 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
     watchId.current = navigator.geolocation.watchPosition(
       (p) => {
         setLectura(p.coords)
-        if (p.coords.accuracy < PRECISION_MAX) guardar(p.coords)
+        if (p.coords.accuracy < PRECISION_MAX && mejoraPrevia(p.coords.accuracy)) guardar(p.coords)
       },
       (e) => {
         if (e.code === 1) {
@@ -166,8 +170,35 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
     return () => window.clearInterval(t)
   }, [buscando])
 
+  // Manteniendo presionado el botón de captura 2 segundos se abre el ingreso manual de coordenadas.
+  const [manual, setManual] = useState(false)
+  const temporizador = useRef<number | undefined>(undefined)
+  const fueLargo = useRef(false)
+  const cancelarPulsacion = () => window.clearTimeout(temporizador.current)
+  useEffect(() => cancelarPulsacion, [])
+  const pulsacion = {
+    onPointerDown: () => {
+      fueLargo.current = false
+      temporizador.current = window.setTimeout(() => {
+        fueLargo.current = true
+        setManual(true)
+      }, 2000)
+    },
+    onPointerUp: cancelarPulsacion,
+    onPointerLeave: cancelarPulsacion,
+    onPointerCancel: cancelarPulsacion,
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    onClick: () => {
+      if (fueLargo.current) fueLargo.current = false
+      else capturar()
+    },
+    title: 'Mantén presionado 2 segundos para escribir las coordenadas',
+  }
+
   const tiene = cuenta.lat !== undefined && cuenta.lng !== undefined
   const mapa = tiene ? `https://www.google.com/maps/search/?api=1&query=${cuenta.lat},${cuenta.lng}` : ''
+  const meta = previa !== undefined && previa < PRECISION_MAX ? `${previa.toFixed(1)} m o menos, igual o mejor que la anterior` : `menos de ${PRECISION_MAX} m`
+  const puedeGuardarAsi = lectura !== null && segundos >= 20 && mejoraPrevia(lectura.accuracy)
 
   return (
     <div className="bloque ubic">
@@ -175,14 +206,14 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
         <>
           <span className="buscando">
             Buscando GPS… {lectura ? `±${lectura.accuracy.toFixed(1)} m` : `${segundos}s`}
-            <small> (meta: menos de {PRECISION_MAX} m)</small>
+            <small> (meta: {meta})</small>
           </span>
           <div className="ubic-fila">
             <button className="pequeno" onClick={detener}>
               Cancelar
             </button>
-            {lectura && segundos >= 20 && (
-              <button className="pequeno" onClick={() => guardar(lectura)}>
+            {puedeGuardarAsi && (
+              <button className="pequeno" onClick={() => guardar(lectura!)}>
                 Guardar así
               </button>
             )}
@@ -192,29 +223,83 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
         <>
           <a className="pequeno enlace-mapa" href={mapa} target="_blank" rel="noreferrer">
             📍 Ver en Maps
-            {cuenta.precision !== undefined && <small> ±{cuenta.precision.toFixed(1)} m</small>}
+            {cuenta.ubicManual ? <small> manual</small> : cuenta.precision !== undefined && <small> ±{cuenta.precision.toFixed(1)} m</small>}
           </a>
-          <button className="enlace" onClick={capturar}>
+          <button className="enlace" {...pulsacion}>
             ↻ Volver a capturar
           </button>
         </>
       ) : (
-        <button className="pequeno" onClick={capturar}>
+        <button className="pequeno" {...pulsacion}>
           📍 Capturar ubicación
         </button>
       )}
       {error && <span className="error">{error}</span>}
+      {manual && (
+        <CoordenadasManuales
+          inicial={tiene ? { lat: cuenta.lat!, lng: cuenta.lng! } : undefined}
+          onCerrar={() => setManual(false)}
+          onGuardar={(lat, lng) => {
+            onGuardar({ lat, lng, precision: undefined, ubicManual: true, ubicadoEn: Date.now() })
+            setManual(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function CoordenadasManuales({
+  inicial,
+  onCerrar,
+  onGuardar,
+}: {
+  inicial?: { lat: number; lng: number }
+  onCerrar: () => void
+  onGuardar: (lat: number, lng: number) => void
+}) {
+  const [lat, setLat] = useState(inicial ? String(inicial.lat) : '')
+  const [lng, setLng] = useState(inicial ? String(inicial.lng) : '')
+  const num = (s: string) => Number(s.trim().replace(',', '.'))
+  const la = num(lat)
+  const ln = num(lng)
+  const valido = lat.trim() !== '' && lng.trim() !== '' && Math.abs(la) <= 90 && Math.abs(ln) <= 180 && !isNaN(la) && !isNaN(ln)
+
+  return (
+    <div className="hoja-fondo" onClick={onCerrar}>
+      <div className="hoja" onClick={(e) => e.stopPropagation()}>
+        <div className="hoja-cab">
+          <strong>Escribir coordenadas</strong>
+          <button className="icono" onClick={onCerrar} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+        <p className="ayuda">Ejemplo: latitud 1.15245 y longitud -76.65021. Se guardan como ubicación manual.</p>
+        <label>
+          Latitud
+          <input autoFocus inputMode="decimal" placeholder="1.15245" value={lat} onChange={(e) => setLat(e.target.value)} />
+        </label>
+        <label>
+          Longitud
+          <input inputMode="decimal" placeholder="-76.65021" value={lng} onChange={(e) => setLng(e.target.value)} />
+        </label>
+        {(lat.trim() !== '' || lng.trim() !== '') && !valido && <p className="error">Revisa los números (latitud −90 a 90, longitud −180 a 180)</p>}
+        <button className="grande primario" disabled={!valido} onClick={() => onGuardar(la, ln)}>
+          Guardar coordenadas
+        </button>
+      </div>
     </div>
   )
 }
 
 function Fotos({ cuenta }: { cuenta: Cuenta }) {
   const fotos = useLiveQuery(() => db.fotos.where('cuentaId').equals(cuenta.id!).toArray(), [cuenta.id])
-  const inputRef = useRef<HTMLInputElement>(null)
+  const camaraRef = useRef<HTMLInputElement>(null)
+  const galeriaRef = useRef<HTMLInputElement>(null)
   const [visor, setVisor] = useState<number | null>(null)
   const [error, setError] = useState('')
 
-  const agregar = async (files: FileList | null) => {
+  const agregar = async (files: FileList | null, input: React.RefObject<HTMLInputElement | null>) => {
     if (!files?.length) return
     setError('')
     try {
@@ -226,7 +311,7 @@ function Fotos({ cuenta }: { cuenta: Cuenta }) {
     } catch {
       setError('No se pudo guardar la foto')
     }
-    if (inputRef.current) inputRef.current.value = ''
+    if (input.current) input.current.value = ''
   }
 
   const quitar = async (fotoId: number) => {
@@ -238,10 +323,15 @@ function Fotos({ cuenta }: { cuenta: Cuenta }) {
 
   return (
     <section className="bloque fotos">
-      <button className="pequeno" onClick={() => inputRef.current?.click()}>
+      <button className="pequeno" onClick={() => camaraRef.current?.click()}>
         📷 Foto{fotos?.length ? ` (${fotos.length})` : ''}
       </button>
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" multiple hidden onChange={(e) => agregar(e.target.files)} />
+      <button className="pequeno" onClick={() => galeriaRef.current?.click()} aria-label="Elegir fotos de la galería">
+        🖼 Galería
+      </button>
+      {/* con capture se abre directo la cámara; sin capture se elige de la galería */}
+      <input ref={camaraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => agregar(e.target.files, camaraRef)} />
+      <input ref={galeriaRef} type="file" accept="image/*" multiple hidden onChange={(e) => agregar(e.target.files, galeriaRef)} />
       <div className="miniaturas">
         {fotos?.map((f, i) => (
           <Miniatura key={f.id} blob={f.blob} onClick={() => setVisor(i)} />

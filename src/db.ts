@@ -24,6 +24,7 @@ export interface Cuenta {
   lng?: number
   precision?: number
   ubicadoEn?: number
+  ubicManual?: boolean // coordenadas escritas a mano (no vienen del GPS)
   color?: Color
   inicioVereda?: string // nombre de la vereda que empieza en esta cuenta
   finVereda?: boolean // esta cuenta es la última de la vereda
