@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cuenta, type Estado } from './db'
 import { comprimirFoto } from './imagen'
 import Visor from './Visor'
+import { esNuevo } from './util'
 
 const ESTADOS: { valor: Estado; texto: string }[] = [
   { valor: 'normal', texto: 'Normal' },
@@ -18,7 +19,17 @@ export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: str
     <article className="ficha">
       <section className={'datos' + (cuenta.color ? ` c-${cuenta.color}` : '')}>
         <div className="niu">
-          NIU {cuenta.niu}
+          <span>NIU {cuenta.niu}</span>
+          {esNuevo(cuenta) && <span className="insignia nuevo">NUEVO</span>}
+          {cuenta.anulada && <span className="insignia anulada">ANULADA</span>}
+          {cuenta.anulada && (
+            <button
+              className="corregir"
+              onClick={() => confirm('¿Esta matrícula sí sigue activa? Se le quitará la marca ANULADA.') && guardar({ anulada: undefined })}
+            >
+              ↩ Corregir
+            </button>
+          )}
           {vereda && <span className="vereda-tag">📍 Vereda {vereda}</span>}
         </div>
         <h2>{cuenta.nombre || '(sin nombre)'}</h2>

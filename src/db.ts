@@ -27,6 +27,16 @@ export interface Cuenta {
   color?: Color
   inicioVereda?: string // nombre de la vereda que empieza en esta cuenta
   finVereda?: boolean // esta cuenta es la última de la vereda
+  anulada?: boolean // ya no viene en el Excel de la empresa (matrícula anulada)
+  nuevoHasta?: number // marca "NUEVO" hasta esta fecha (15 días tras cargarla desde un Excel)
+  manual?: boolean // agregada a mano: nunca se anula por no venir en el Excel
+}
+
+// Copia de la ruta antes de la última actualización con Excel (para deshacer).
+export interface Copia {
+  rutaId: number
+  fecha: number
+  cuentas: Cuenta[]
 }
 
 export interface Foto {
@@ -41,6 +51,7 @@ class MiRutaDB extends Dexie {
   rutas!: Table<Ruta, number>
   cuentas!: Table<Cuenta, number>
   fotos!: Table<Foto, number>
+  copias!: Table<Copia, number>
 
   constructor() {
     super('mi-ruta')
@@ -49,13 +60,20 @@ class MiRutaDB extends Dexie {
       cuentas: '++id, rutaId, [rutaId+orden]',
       fotos: '++id, cuentaId, rutaId',
     })
+    this.version(2).stores({
+      rutas: '++id',
+      cuentas: '++id, rutaId, [rutaId+orden]',
+      fotos: '++id, cuentaId, rutaId',
+      copias: 'rutaId',
+    })
   }
 }
 
 export const db = new MiRutaDB()
 
 export async function borrarRuta(rutaId: number) {
-  await db.transaction('rw', db.rutas, db.cuentas, db.fotos, async () => {
+  await db.transaction('rw', db.rutas, db.cuentas, db.fotos, db.copias, async () => {
+    await db.copias.delete(rutaId)
     await db.fotos.where('rutaId').equals(rutaId).delete()
     await db.cuentas.where('rutaId').equals(rutaId).delete()
     await db.rutas.delete(rutaId)
@@ -81,7 +99,7 @@ export async function agregarCuenta(
   datos: Pick<Cuenta, 'niu' | 'nombre' | 'medidor' | 'direccion'>,
 ) {
   return db.transaction('rw', db.cuentas, async () => {
-    const nueva: Cuenta = { ...datos, rutaId, orden: despuesDe + 1, estado: 'normal', nota: '', promedio: '' }
+    const nueva: Cuenta = { ...datos, rutaId, orden: despuesDe + 1, estado: 'normal', nota: '', promedio: '', manual: true }
     nueva.id = await db.cuentas.add(nueva)
     const arr = [...cuentas]
     arr.splice(despuesDe + 1, 0, nueva)

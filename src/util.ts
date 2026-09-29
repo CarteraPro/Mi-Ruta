@@ -19,6 +19,8 @@ export function veredasDerivadas(cuentas: Cuenta[]): (string | null)[] {
   })
 }
 
+export const esNuevo = (c: Cuenta) => !!c.nuevoHasta && Date.now() < c.nuevoHasta
+
 // La dirección suele traer prefijos ("Vr", "Br"), así que basta con que contenga el nombre.
 export const distinta = (vereda: string | null, direccion: string) =>
   !!vereda && !direccion.toLowerCase().includes(vereda.trim().toLowerCase())

@@ -18,13 +18,15 @@ const norm = (s: unknown) =>
 
 const texto = (v: unknown) => String(v ?? '').trim()
 
-export interface ResultadoImportacion {
-  rutaId: number
-  importadas: number
-  omitidas: number
+export interface FilaExcel {
+  niu: string
+  nombre: string
+  medidor: string
+  direccion: string
 }
 
-export async function importarExcel(file: File, nombreRuta: string): Promise<ResultadoImportacion> {
+// Lee solo las 4 columnas que importan, en el orden del archivo. Las filas sin NIU se omiten.
+export async function leerFilas(file: File): Promise<{ filas: FilaExcel[]; omitidas: number }> {
   const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' })
   const hoja = wb.Sheets[wb.SheetNames[0]]
   const filas = XLSX.utils.sheet_to_json<unknown[]>(hoja, { header: 1, blankrows: false, defval: '' })
@@ -43,7 +45,7 @@ export async function importarExcel(file: File, nombreRuta: string): Promise<Res
   ].filter(Boolean)
   if (faltan.length) throw new Error(`Al archivo le faltan las columnas: ${faltan.join(', ')}`)
 
-  const cuentas: Omit<Cuenta, 'rutaId'>[] = []
+  const salida: FilaExcel[] = []
   let omitidas = 0
   for (const fila of filas.slice(1)) {
     const niu = texto(fila[iNiu])
@@ -52,23 +54,26 @@ export async function importarExcel(file: File, nombreRuta: string): Promise<Res
       if (fila.some((c) => texto(c))) omitidas++
       continue
     }
-    cuentas.push({
-      orden: cuentas.length,
-      niu,
-      nombre: texto(fila[iNombre]),
-      medidor: texto(fila[iMedidor]),
-      direccion: texto(fila[iDireccion]),
-      estado: 'normal',
-      nota: '',
-      promedio: '',
-    })
+    salida.push({ niu, nombre: texto(fila[iNombre]), medidor: texto(fila[iMedidor]), direccion: texto(fila[iDireccion]) })
   }
-  if (!cuentas.length) throw new Error('No se encontró ninguna cuenta con NIU en el archivo')
+  if (!salida.length) throw new Error('No se encontró ninguna cuenta con NIU en el archivo')
+  return { filas: salida, omitidas }
+}
 
+export interface ResultadoImportacion {
+  rutaId: number
+  importadas: number
+  omitidas: number
+}
+
+export async function importarExcel(file: File, nombreRuta: string): Promise<ResultadoImportacion> {
+  const { filas, omitidas } = await leerFilas(file)
   const rutaId = await db.transaction('rw', db.rutas, db.cuentas, async () => {
     const id = await db.rutas.add({ nombre: nombreRuta, creada: Date.now() })
-    await db.cuentas.bulkAdd(cuentas.map((c) => ({ ...c, rutaId: id })))
+    await db.cuentas.bulkAdd(
+      filas.map((f, i): Cuenta => ({ ...f, rutaId: id, orden: i, estado: 'normal', nota: '', promedio: '' })),
+    )
     return id
   })
-  return { rutaId, importadas: cuentas.length, omitidas }
+  return { rutaId, importadas: filas.length, omitidas }
 }

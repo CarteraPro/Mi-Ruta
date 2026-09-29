@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, moverCuenta, agregarCuenta, eliminarCuenta, type Color, type Cuenta } from './db'
-import { COLORES, distinta, veredasDerivadas } from './util'
+import { COLORES, distinta, esNuevo, veredasDerivadas } from './util'
 
 interface Props {
   rutaId: number
@@ -133,6 +133,8 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                   <button className="fila-datos" onClick={() => onIr(c.id!)}>
                     <strong>
                       <span className="pos">{i + 1}</span> {c.nombre || '(sin nombre)'}
+                      {esNuevo(c) && <span className="insignia nuevo">NUEVO</span>}
+                      {c.anulada && <span className="insignia anulada">ANULADA</span>}
                     </strong>
                     <span>
                       NIU {c.niu} · {c.direccion || 'sin dirección'}
@@ -213,6 +215,12 @@ function Opciones({
             ✕
           </button>
         </div>
+
+        {cuenta.anulada && (
+          <button className="pequeno" onClick={() => guardar({ anulada: undefined })}>
+            ↩ Corregir: esta matrícula NO está anulada
+          </button>
+        )}
 
         <div className="hoja-tit">Color de fondo</div>
         <div className="colores">
