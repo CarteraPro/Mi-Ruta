@@ -10,14 +10,17 @@ const ESTADOS: { valor: Estado; texto: string }[] = [
   { valor: 'local_desocupado', texto: '🏪 Local desoc.' },
 ]
 
-export default function Ficha({ cuenta }: { cuenta: Cuenta }) {
+export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: string | null }) {
   const id = cuenta.id!
   const guardar = (cambios: Partial<Cuenta>) => db.cuentas.update(id, cambios)
 
   return (
     <article className="ficha">
-      <section className="datos">
-        <div className="niu">NIU {cuenta.niu}</div>
+      <section className={'datos' + (cuenta.color ? ` c-${cuenta.color}` : '')}>
+        <div className="niu">
+          NIU {cuenta.niu}
+          {vereda && <span className="vereda-tag">📍 Vereda {vereda}</span>}
+        </div>
         <h2>{cuenta.nombre || '(sin nombre)'}</h2>
         <dl>
           <div>
