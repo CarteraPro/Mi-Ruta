@@ -167,3 +167,5 @@ dd { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
 .diff { color: var(--suave); }
 .diff s { color: var(--rojo); }
 .hoja-fila .grande { flex: 1; padding: 12px; }
+
+.acceso { display: flex; flex-direction: column; gap: 12px; }

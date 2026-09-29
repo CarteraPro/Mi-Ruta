@@ -31,7 +31,9 @@ export async function leerFilas(file: File): Promise<{ filas: FilaExcel[]; omiti
   const hoja = wb.Sheets[wb.SheetNames[0]]
   const filas = XLSX.utils.sheet_to_json<unknown[]>(hoja, { header: 1, blankrows: false, defval: '' })
 
-  const encabezado = (filas[0] ?? []).map(norm)
+  // El encabezado es la primera fila que tenga la columna NIU (por si el archivo trae filas de título arriba).
+  const filaEncabezado = Math.max(0, filas.findIndex((f) => f.some((c) => COLUMNAS.niu.some((n) => n === norm(c)))))
+  const encabezado = (filas[filaEncabezado] ?? []).map(norm)
   const idx = (nombres: readonly string[]) => encabezado.findIndex((h) => nombres.includes(h))
   const iNiu = idx(COLUMNAS.niu)
   const iNombre = idx(COLUMNAS.nombre)
@@ -47,11 +49,13 @@ export async function leerFilas(file: File): Promise<{ filas: FilaExcel[]; omiti
 
   const salida: FilaExcel[] = []
   let omitidas = 0
-  for (const fila of filas.slice(1)) {
+  for (const fila of filas.slice(filaEncabezado + 1)) {
+    // fila vacía (o solo con espacios): se ignora sin avisar
+    if (!fila.some((c) => texto(c))) continue
     const niu = texto(fila[iNiu])
     if (!niu) {
-      // fila sin NIU (vacía o incompleta): no se puede asociar fotos ni datos
-      if (fila.some((c) => texto(c))) omitidas++
+      // trae datos pero sin NIU: no se puede asociar fotos ni datos, se cuenta como omitida
+      omitidas++
       continue
     }
     salida.push({ niu, nombre: texto(fila[iNombre]), medidor: texto(fila[iMedidor]), direccion: texto(fila[iDireccion]) })

@@ -4,6 +4,7 @@ import { db, borrarRuta } from './db'
 import { importarExcel, leerFilas } from './importar'
 import { aplicarPlan, deshacerActualizacion, planificar, type Plan } from './actualizar'
 import Resumen from './Resumen'
+import { bloquear } from './Acceso'
 
 const fechaCorta = (t: number) => new Date(t).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 
@@ -158,6 +159,10 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
       </p>
       {error && <p className="error">{error}</p>}
       {aviso && <p className="aviso">{aviso}</p>}
+
+      <button className="enlace" onClick={bloquear}>
+        🔒 Bloquear la app
+      </button>
 
       {plan && <Resumen plan={plan.plan} ruta={plan.ruta} ocupado={cargando} onCancelar={() => setPlan(null)} onAplicar={aplicar} />}
     </main>

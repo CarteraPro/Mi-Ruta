@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Acceso from './Acceso'
 import SelectorRuta from './SelectorRuta'
 import Recorrido from './Recorrido'
 
@@ -16,9 +17,13 @@ export default function App() {
     setRutaId(id)
   }
 
-  return rutaId === null ? (
-    <SelectorRuta onElegir={elegir} />
-  ) : (
-    <Recorrido key={rutaId} rutaId={rutaId} onCambiarRuta={() => elegir(null)} />
+  return (
+    <Acceso>
+      {rutaId === null ? (
+        <SelectorRuta onElegir={elegir} />
+      ) : (
+        <Recorrido key={rutaId} rutaId={rutaId} onCambiarRuta={() => elegir(null)} />
+      )}
+    </Acceso>
   )
 }
