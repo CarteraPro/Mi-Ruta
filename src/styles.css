@@ -1,0 +1,91 @@
+:root {
+  --verde: #0f766e;
+  --verde-claro: #ccfbf1;
+  --fondo: #f4f7f6;
+  --tarjeta: #fff;
+  --texto: #10201e;
+  --suave: #5b6f6c;
+  --borde: #d6e0de;
+  --rojo: #b91c1c;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--texto);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--fondo); overscroll-behavior: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { opacity: 0.45; cursor: default; }
+input, textarea { font: inherit; width: 100%; padding: 12px; border: 1px solid var(--borde); border-radius: 10px; background: #fff; margin-top: 6px; }
+input:focus, textarea:focus { outline: 2px solid var(--verde); border-color: transparent; }
+label { display: block; font-weight: 600; color: var(--suave); font-size: 0.9rem; }
+
+.pantalla { min-height: 100%; padding: 24px 20px; max-width: 520px; margin: 0 auto; }
+.centrada { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.logo { font-size: 2.4rem; color: var(--verde); margin: 0; }
+.sub { font-size: 1.15rem; margin: 0; }
+.ayuda { color: var(--suave); font-size: 0.85rem; margin: 0; }
+.error { color: var(--rojo); font-weight: 600; margin: 6px 0 0; }
+.aviso { color: var(--verde); font-weight: 600; }
+
+.grande { padding: 16px; font-size: 1.1rem; font-weight: 700; border-radius: 14px; border: 2px solid var(--verde); background: #fff; color: var(--verde); }
+.grande.primario { background: var(--verde); color: #fff; }
+.pequeno { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--verde); background: var(--verde-claro); color: var(--verde); font-weight: 600; }
+.icono { width: 44px; height: 44px; border-radius: 12px; border: none; background: transparent; font-size: 1.3rem; }
+.peligro { color: var(--rojo); }
+
+.lista-rutas { display: flex; flex-direction: column; gap: 10px; }
+.ruta-item { display: flex; gap: 6px; align-items: center; }
+.ruta-abrir { flex: 1; text-align: left; padding: 16px; border-radius: 14px; background: #fff; border: 1px solid var(--borde); display: flex; flex-direction: column; gap: 4px; }
+.ruta-abrir span { color: var(--suave); font-size: 0.9rem; }
+
+/* Recorrido: barra, vecinos arriba, ficha grande al centro, vecinos abajo, acciones */
+.recorrido { height: 100%; display: flex; flex-direction: column; max-width: 640px; margin: 0 auto; }
+.barra { display: flex; align-items: center; gap: 6px; padding: 6px 8px; padding-top: max(6px, env(safe-area-inset-top)); background: var(--verde); color: #fff; }
+.barra .icono { color: #fff; }
+.barra-titulo { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.barra-titulo strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barra-titulo span { font-size: 0.85rem; opacity: 0.85; }
+
+.vecinos { display: flex; flex-direction: column; gap: 4px; padding: 6px 12px; }
+.vecinos button { text-align: left; padding: 8px 12px; border-radius: 10px; border: none; background: #e6eeec; color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vecinos.arriba { justify-content: flex-end; min-height: 84px; }
+.fin { color: var(--suave); font-size: 0.85rem; padding: 8px 12px; }
+
+.centro { flex: 1; overflow-y: auto; padding: 4px 12px 12px; min-height: 0; }
+.ficha { display: flex; flex-direction: column; gap: 12px; }
+.datos { background: var(--tarjeta); border-radius: 18px; padding: 18px; border: 2px solid var(--verde); }
+.niu { color: var(--verde); font-weight: 800; font-size: 1.2rem; }
+.datos h2 { margin: 4px 0 12px; font-size: 1.6rem; line-height: 1.2; }
+dl { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+dt { color: var(--suave); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+dd { margin: 0; font-size: 1.2rem; font-weight: 600; word-break: break-word; }
+.bloque { background: var(--tarjeta); border-radius: 14px; padding: 14px; border: 1px solid var(--borde); }
+.fila-titulo { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; color: var(--suave); }
+.coords { margin: 10px 0 0; font-size: 0.9rem; word-break: break-all; }
+.coords a { color: var(--verde); font-weight: 600; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 10px 14px; border-radius: 999px; border: 1px solid var(--borde); background: #fff; font-weight: 600; }
+.chip.activo { background: var(--verde); border-color: var(--verde); color: #fff; }
+
+.miniaturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
+.miniatura { padding: 0; border: none; border-radius: 10px; overflow: hidden; aspect-ratio: 1; background: #ddd; }
+.miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+
+.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; justify-content: center; align-items: flex-start; z-index: 10; }
+.modal-caja { background: var(--fondo); width: 100%; max-width: 640px; height: 100%; display: flex; flex-direction: column; }
+.modal-cab { display: flex; align-items: center; gap: 6px; padding: 10px; padding-top: max(10px, env(safe-area-inset-top)); }
+.modal-cab input { margin: 0; }
+.resultados { list-style: none; margin: 0; padding: 0 10px 10px; overflow-y: auto; flex: 1; }
+.resultados button { width: 100%; text-align: left; padding: 12px; margin-bottom: 6px; border-radius: 12px; background: #fff; border: 1px solid var(--borde); display: flex; flex-direction: column; gap: 2px; }
+.resultados span { color: var(--suave); font-size: 0.85rem; }
+
+.visor { position: fixed; inset: 0; background: #000; z-index: 20; display: flex; flex-direction: column; }
+.visor-barra { display: flex; justify-content: space-between; padding: 8px; padding-top: max(8px, env(safe-area-inset-top)); }
+.visor-barra .icono { color: #fff; background: rgba(255, 255, 255, 0.15); }
+.visor-lienzo { flex: 1; overflow: auto; display: flex; min-height: 0; -webkit-overflow-scrolling: touch; }
+.visor-lienzo img { margin: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
+.visor-lienzo.ampliada img { max-width: none; max-height: none; width: 250%; margin: 0; }
+.visor-ayuda { color: #ccc; text-align: center; margin: 0; padding: 8px; font-size: 0.85rem; }
