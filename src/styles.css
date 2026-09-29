@@ -50,10 +50,9 @@ html, body, #root { height: 100dvh; overflow: hidden; }
 .vecinos button { text-align: left; padding: 6px 10px; border-radius: 8px; border: none; background: #e6eeec; color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
 .vecinos.arriba { justify-content: flex-end; }
 .fin { color: var(--suave); font-size: 0.8rem; padding: 6px 10px; }
-/* en pantallas bajas solo se muestra el vecino inmediato */
-@media (max-height: 760px) {
-  .vecinos.arriba button:not(:last-of-type), .vecinos.abajo button:not(:first-of-type) { display: none; }
-}
+.banda-v { font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 8px; color: #fff; }
+.banda-v.inicio { background: var(--verde); }
+.banda-v.fin { background: #334155; }
 
 .centro { flex: 1; min-height: 0; min-width: 0; padding: 2px 10px 6px; display: flex; }
 .ficha { flex: 1; min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }

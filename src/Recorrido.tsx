@@ -1,11 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from './db'
+import { db, type Cuenta } from './db'
 import Ficha from './Ficha'
 import Lista from './Lista'
 import { distinta, veredasDerivadas } from './util'
 
-const VECINOS = 2
+// En pantallas bajas solo cabe el vecino inmediato.
+function useVecinos() {
+  const calc = () => (window.innerHeight <= 760 ? 1 : 2)
+  const [n, setN] = useState(calc)
+  useEffect(() => {
+    const f = () => setN(calc())
+    window.addEventListener('resize', f)
+    return () => window.removeEventListener('resize', f)
+  }, [])
+  return n
+}
+
+type Item = { banda: 'inicio' | 'fin'; texto: string } | { cuenta: Cuenta; idx: number }
 
 export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; onCambiarRuta: () => void }) {
   const ruta = useLiveQuery(() => db.rutas.get(rutaId), [rutaId])
@@ -16,6 +28,7 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
   const [lista, setLista] = useState(false)
   const ultimoIdx = useRef(0)
 
+  const VECINOS = useVecinos()
   const veredas = useMemo(() => (cuentas ? veredasDerivadas(cuentas) : []), [cuentas])
 
   const total = cuentas?.length ?? 0
@@ -41,8 +54,40 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
   }
 
   const ir = (i: number) => setActualId(cuentas[Math.max(0, Math.min(total - 1, i))].id!)
-  const antes = cuentas.slice(Math.max(0, actual - VECINOS), actual)
-  const despues = cuentas.slice(actual + 1, actual + 1 + VECINOS)
+  const inicio = (c: Cuenta): Item => ({ banda: 'inicio', texto: `▶ Inicio de vereda: ${c.inicioVereda}` })
+  const fin: Item = { banda: 'fin', texto: '■ Fin de vereda' }
+
+  // Franja de arriba: vecinos anteriores; si el actual abre una vereda, se avisa justo encima de él.
+  const arriba: Item[] = []
+  for (let i = Math.max(0, actual - VECINOS); i <= actual; i++) {
+    const c = cuentas[i]
+    if (c.inicioVereda) arriba.push(inicio(c))
+    if (i < actual) {
+      arriba.push({ cuenta: c, idx: i })
+      if (c.finVereda) arriba.push(fin)
+    }
+  }
+  // Franja de abajo: si el actual cierra una vereda, se avisa justo debajo de él.
+  const abajo: Item[] = []
+  if (cuenta.finVereda) abajo.push(fin)
+  for (let i = actual + 1; i <= Math.min(total - 1, actual + VECINOS); i++) {
+    const c = cuentas[i]
+    if (c.inicioVereda) abajo.push(inicio(c))
+    abajo.push({ cuenta: c, idx: i })
+    if (c.finVereda && i < actual + VECINOS) abajo.push(fin)
+  }
+  const render = (items: Item[], flecha: string) =>
+    items.map((it, k) =>
+      'banda' in it ? (
+        <div key={`b${k}`} className={`banda-v ${it.banda}`}>
+          {it.texto}
+        </div>
+      ) : (
+        <button key={it.cuenta.id} className={it.cuenta.color ? `c-${it.cuenta.color}` : ''} onClick={() => ir(it.idx)}>
+          {flecha} {it.cuenta.nombre || it.cuenta.niu}
+        </button>
+      ),
+    )
   const vereda = veredas[actual]
 
   return (
@@ -63,12 +108,8 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
       </header>
 
       <nav className="vecinos arriba" aria-label="Anteriores">
-        {antes.map((c, i) => (
-          <button key={c.id} className={c.color ? `c-${c.color}` : ''} onClick={() => ir(actual - antes.length + i)}>
-            ↑ {c.nombre || c.niu}
-          </button>
-        ))}
-        {!antes.length && <span className="fin">Inicio de la ruta</span>}
+        {render(arriba, '↑')}
+        {!arriba.length && <span className="fin">Inicio de la ruta</span>}
       </nav>
 
       <div className="centro">
@@ -76,12 +117,8 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
       </div>
 
       <nav className="vecinos abajo" aria-label="Siguientes">
-        {despues.map((c, i) => (
-          <button key={c.id} className={c.color ? `c-${c.color}` : ''} onClick={() => ir(actual + 1 + i)}>
-            ↓ {c.nombre || c.niu}
-          </button>
-        ))}
-        {!despues.length && <span className="fin">Fin de la ruta</span>}
+        {render(abajo, '↓')}
+        {!abajo.length && <span className="fin">Fin de la ruta</span>}
       </nav>
 
       <footer className="acciones">
