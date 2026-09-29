@@ -1,18 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Cuenta, type Estado } from './db'
+import { db, type Cuenta } from './db'
+import Estados from './Estados'
 import { comprimirFoto } from './imagen'
 import Visor from './Visor'
 import { esNuevo } from './util'
 
 // La ubicación se guarda sola cuando el GPS tiene una precisión mejor (menor) a este valor, en metros.
 const PRECISION_MAX = 6
-
-const ESTADOS: { valor: Estado; texto: string }[] = [
-  { valor: 'normal', texto: 'Normal' },
-  { valor: 'casa_desocupada', texto: '🏚 Casa desoc.' },
-  { valor: 'local_desocupado', texto: '🏪 Local desoc.' },
-]
 
 export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: string | null }) {
   const id = cuenta.id!
@@ -48,17 +43,7 @@ export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: str
         </dl>
       </section>
 
-      <div className="chips">
-        {ESTADOS.map((e) => (
-          <button
-            key={e.valor}
-            className={'chip' + (cuenta.estado === e.valor ? ' activo' : '')}
-            onClick={() => guardar({ estado: e.valor })}
-          >
-            {e.texto}
-          </button>
-        ))}
-      </div>
+      <Estados cuenta={cuenta} onElegir={(estado) => guardar({ estado })} />
 
       <div className="fila2">
         <label className="bloque">

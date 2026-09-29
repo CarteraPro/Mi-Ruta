@@ -1,6 +1,14 @@
 import Dexie, { type Table } from 'dexie'
 
-export type Estado = 'normal' | 'casa_desocupada' | 'local_desocupado'
+// Claves fijas: 'normal' (Lectura real), 'casa_desocupada', 'local_desocupado' (Sin acometida ni medidor).
+// Los estados creados por el usuario se guardan como `extra:<texto>`.
+export type Estado = string
+
+// Botón de estado agregado por el usuario; queda disponible para todas las cuentas.
+export interface EstadoExtra {
+  id?: number
+  texto: string
+}
 export type Color = 'rojo' | 'naranja' | 'amarillo' | 'verde' | 'azul'
 
 export interface Ruta {
@@ -53,6 +61,7 @@ class MiRutaDB extends Dexie {
   cuentas!: Table<Cuenta, number>
   fotos!: Table<Foto, number>
   copias!: Table<Copia, number>
+  estadosExtra!: Table<EstadoExtra, number>
 
   constructor() {
     super('mi-ruta')
@@ -66,6 +75,13 @@ class MiRutaDB extends Dexie {
       cuentas: '++id, rutaId, [rutaId+orden]',
       fotos: '++id, cuentaId, rutaId',
       copias: 'rutaId',
+    })
+    this.version(3).stores({
+      rutas: '++id',
+      cuentas: '++id, rutaId, [rutaId+orden]',
+      fotos: '++id, cuentaId, rutaId',
+      copias: 'rutaId',
+      estadosExtra: '++id',
     })
   }
 }
