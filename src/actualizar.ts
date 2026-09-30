@@ -55,7 +55,7 @@ export function planificar(rutaId: number, cuentas: Cuenta[], filas: FilaExcel[]
   const nuevas: Plan['nuevas'] = []
   const hasta = Date.now() + DIAS_NUEVO * 86400000
   for (const i of idxNuevas) {
-    const cuenta: Cuenta = { ...filas[i], rutaId, orden: -1, estado: 'normal', nota: '', promedio: '', nuevoHasta: hasta }
+    const cuenta: Cuenta = { ...filas[i], rutaId, orden: -1, estado: '', nota: '', promedio: '', nuevoHasta: hasta }
     let pos = resultado.length
     let ubicacion = 'al final de la ruta'
     let j = i - 1

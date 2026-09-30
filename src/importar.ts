@@ -75,7 +75,7 @@ export async function importarExcel(file: File, nombreRuta: string): Promise<Res
   const rutaId = await db.transaction('rw', db.rutas, db.cuentas, async () => {
     const id = await db.rutas.add({ nombre: nombreRuta, creada: Date.now() })
     await db.cuentas.bulkAdd(
-      filas.map((f, i): Cuenta => ({ ...f, rutaId: id, orden: i, estado: 'normal', nota: '', promedio: '' })),
+      filas.map((f, i): Cuenta => ({ ...f, rutaId: id, orden: i, estado: '', nota: '', promedio: '' })),
     )
     return id
   })

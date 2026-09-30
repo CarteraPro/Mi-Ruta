@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { DIAS_NUEVO, type Plan } from './actualizar'
+import { useAtras } from './atras'
 
 const LIMITE = 200
 const ETIQUETA = { nombre: 'Nombre', medidor: 'Medidor', direccion: 'Dirección' } as const
@@ -30,6 +31,7 @@ export default function Resumen({
   onCancelar: () => void
   onAplicar: () => void
 }) {
+  useAtras(() => (ocupado ? false : onCancelar()))
   const hayCambios =
     plan.nuevas.length + plan.cambios.length + plan.anuladas.length + plan.reactivadas.length + plan.absorbidas.length > 0
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { UMBRAL_LEJOS_M, type PlanKml } from './kml'
+import { useAtras } from './atras'
 
 const LIMITE = 200
 const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(2)} km` : `${Math.round(n)} m`)
@@ -18,6 +19,7 @@ function Seccion({ titulo, total, abierta, children }: { titulo: string; total: 
 }
 
 export default function ResumenKml({ plan, ocupado, onCancelar, onAplicar }: { plan: PlanKml; ocupado: boolean; onCancelar: () => void; onAplicar: () => void }) {
+  useAtras(() => (ocupado ? false : onCancelar()))
   const lejos = plan.movimientos.filter((m) => m.metros !== null && m.metros > UMBRAL_LEJOS_M)
   const hay = plan.movimientos.length > 0
 

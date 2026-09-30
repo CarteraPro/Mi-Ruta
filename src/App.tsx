@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Acceso from './Acceso'
 import SelectorRuta from './SelectorRuta'
 import Recorrido from './Recorrido'
+import { ConfirmarHost } from './confirmar'
 
 const CLAVE = 'mi-ruta:rutaActual'
 
@@ -24,6 +25,7 @@ export default function App() {
       ) : (
         <Recorrido key={rutaId} rutaId={rutaId} onCambiarRuta={() => elegir(null)} />
       )}
+      <ConfirmarHost />
     </Acceso>
   )
 }

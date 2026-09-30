@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { db } from './db'
 import { aplicarKml, crearKml, leerKml, planificarKml, resumenUbicaciones, type PlanKml } from './kml'
 import ResumenKml from './ResumenKml'
+import { useAtras } from './atras'
 
 const tamano = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`)
 
@@ -14,6 +15,7 @@ export default function EarthRuta({ ruta, onCerrar }: { ruta: { id: number; nomb
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const entrada = useRef<HTMLInputElement>(null)
+  useAtras(() => (trabajando ? false : onCerrar())) // mientras trabaja, atrás no cierra
 
   const cargarInfo = () => resumenUbicaciones(ruta.id).then(setInfo)
   useEffect(() => {

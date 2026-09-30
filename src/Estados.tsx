@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cuenta } from './db'
+import { useAtras } from './atras'
+import { confirmar } from './confirmar'
 
 const BASE = [
   { valor: 'normal', texto: 'Lectura real' },
@@ -9,7 +11,7 @@ const BASE = [
 ]
 
 const PREFIJO = 'extra:'
-export const textoEstado = (estado: string) => BASE.find((b) => b.valor === estado)?.texto ?? estado.replace(PREFIJO, '')
+export const textoEstado = (estado: string) => (estado ? (BASE.find((b) => b.valor === estado)?.texto ?? estado.replace(PREFIJO, '')) : 'Sin estado')
 
 // Botones de estado: 3 fijos + los que agregue el usuario (disponibles para todas las cuentas).
 export default function Estados({ cuenta, onElegir }: { cuenta: Cuenta; onElegir: (estado: string) => void }) {
@@ -20,11 +22,14 @@ export default function Estados({ cuenta, onElegir }: { cuenta: Cuenta; onElegir
   // si la cuenta tiene un estado cuyo botón se borró, se sigue mostrando para no perderlo de vista
   if (cuenta.estado.startsWith(PREFIJO) && !valoresExtra.includes(cuenta.estado)) valoresExtra.push(cuenta.estado)
 
+  // sin estado ('') hasta que se elija uno; volver a tocar el botón activo lo quita
+  const alternar = (valor: string) => onElegir(cuenta.estado === valor ? '' : valor)
+
   return (
     <>
       <div className="chips">
         {BASE.map((e) => (
-          <button key={e.valor} className={'chip' + (cuenta.estado === e.valor ? ' activo' : '')} onClick={() => onElegir(e.valor)}>
+          <button key={e.valor} className={'chip' + (cuenta.estado === e.valor ? ' activo' : '')} onClick={() => alternar(e.valor)}>
             {e.texto}
           </button>
         ))}
@@ -35,7 +40,7 @@ export default function Estados({ cuenta, onElegir }: { cuenta: Cuenta; onElegir
       {valoresExtra.length > 0 && (
         <div className="chips-extra">
           {valoresExtra.map((v) => (
-            <button key={v} className={'chip' + (cuenta.estado === v ? ' activo' : '')} onClick={() => onElegir(v)}>
+            <button key={v} className={'chip' + (cuenta.estado === v ? ' activo' : '')} onClick={() => alternar(v)}>
               {textoEstado(v)}
             </button>
           ))}
@@ -68,6 +73,7 @@ function NuevoEstado({
   onCerrar: () => void
   onCrear: (texto: string) => void
 }) {
+  useAtras(onCerrar)
   const [texto, setTexto] = useState('')
   const t = texto.trim()
   const repetido = existentes.some((e) => e.toLowerCase() === t.toLowerCase())
@@ -104,7 +110,11 @@ function NuevoEstado({
                 <button
                   className="icono peligro"
                   aria-label={`Quitar el botón ${e.texto}`}
-                  onClick={() => confirm(`¿Quitar el botón "${e.texto}"? Los usuarios que ya lo tienen conservan ese estado.`) && db.estadosExtra.delete(e.id!)}
+                  onClick={async () => {
+                    if (await confirmar(`¿Está seguro de quitar el botón "${e.texto}"?\nLos usuarios que ya lo tienen conservan ese estado.`, { si: 'Sí, quitar', no: 'No', peligro: true })) {
+                      await db.estadosExtra.delete(e.id!)
+                    }
+                  }}
                 >
                   🗑
                 </button>

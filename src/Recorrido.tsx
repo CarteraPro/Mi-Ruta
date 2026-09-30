@@ -4,6 +4,7 @@ import { db, type Cuenta } from './db'
 import Ficha from './Ficha'
 import Lista from './Lista'
 import { colorEfectivo, distinta, veredasDerivadas } from './util'
+import { useAtras } from './atras'
 
 // En pantallas bajas solo cabe el vecino inmediato.
 function useVecinos() {
@@ -27,6 +28,7 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
   const [actualId, setActualId] = useState<number | null>(() => Number(localStorage.getItem(claveCuenta)) || null)
   const [lista, setLista] = useState(false)
   const ultimoIdx = useRef(0)
+  useAtras(onCambiarRuta) // atrás desde el recorrido vuelve a la lista de rutas
 
   const VECINOS = useVecinos()
   const veredas = useMemo(() => (cuentas ? veredasDerivadas(cuentas) : []), [cuentas])

@@ -9,6 +9,7 @@ import { exportarRuta } from './exportar'
 import { importarRespaldo, infoFotos, leerManifiesto } from './respaldo'
 import RespaldoRuta from './RespaldoRuta'
 import EarthRuta from './EarthRuta'
+import { confirmar } from './confirmar'
 
 const fechaCorta = (t: number) => new Date(t).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 
@@ -89,8 +90,9 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
 
   const deshacer = async (id: number, fecha: number) => {
     if (
-      confirm(
-        `¿Deshacer el último cambio masivo (actualización con Excel o importación de KML) del ${fechaCorta(fecha)}? La ruta vuelve a como estaba antes; se pierden los cambios hechos después (notas, fotos, orden…).`,
+      await confirmar(
+        `¿Está seguro de deshacer el último cambio masivo (actualización con Excel o importación de KML) del ${fechaCorta(fecha)}?\nLa ruta vuelve a como estaba antes; se pierden los cambios hechos después (notas, fotos, orden…).`,
+        { si: 'Sí, deshacer', no: 'No', peligro: true },
       )
     ) {
       await deshacerActualizacion(id)
@@ -127,7 +129,7 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
       } else {
         texto += 'Se agregará como una ruta nueva.'
       }
-      if (!confirm(texto + '\n\n¿Continuar?')) return
+      if (!(await confirmar(texto + '\n\n¿Continuar?', { si: 'Sí, importar', no: 'Cancelar', peligro: !!existente }))) return
       const r = await importarRespaldo(file, m, setAviso)
       setAviso(`Respaldo importado: ${r.cuentas} usuarios${r.fotos ? `, ${r.fotos} fotos` : ''}${r.reemplazada ? ' (reemplazó la ruta anterior)' : ''}.`)
     } catch (e) {
@@ -139,7 +141,7 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
   }
 
   const eliminar = async (id: number, nombre: string) => {
-    if (confirm(`¿Eliminar la ruta "${nombre}" con todas sus fotos y datos? No se puede deshacer.`)) {
+    if (await confirmar(`¿Está seguro de eliminar la ruta "${nombre}"?\nSe borrarán todos sus usuarios, fotos y datos. No se puede deshacer.`, { si: 'Sí, eliminar', no: 'No', peligro: true })) {
       await borrarRuta(id)
     }
   }

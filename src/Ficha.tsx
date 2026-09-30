@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cuenta } from './db'
 import Estados from './Estados'
+import { confirmar } from './confirmar'
+import { useAtras } from './atras'
 import { comprimirFoto } from './imagen'
 import Visor from './Visor'
 import { colorEfectivo, esNuevo } from './util'
@@ -23,7 +25,9 @@ export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: str
           {cuenta.anulada && (
             <button
               className="corregir"
-              onClick={() => confirm('¿Esta matrícula sí sigue activa? Se le quitará la marca ANULADA.') && guardar({ anulada: undefined })}
+              onClick={async () => {
+                if (await confirmar('¿Esta matrícula sí sigue activa?\nSe le quitará la marca ANULADA.', { si: 'Sí, corregir', no: 'No' })) guardar({ anulada: undefined })
+              }}
             >
               ↩ Corregir
             </button>
@@ -190,9 +194,19 @@ function Ubicacion({ cuenta, onGuardar }: { cuenta: Cuenta; onGuardar: (c: Parti
     onPointerUp: cancelarPulsacion,
     onTouchEnd: cancelarPulsacion,
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
-    onClick: () => {
-      if (fueLargo.current) fueLargo.current = false
-      else capturar()
+    onClick: async () => {
+      if (fueLargo.current) {
+        fueLargo.current = false
+        return
+      }
+      // si ya hay una ubicación, se confirma antes de volver a tomarla
+      if (tiene) {
+        const texto = cuenta.ubicManual
+          ? '¿Está seguro de volver a tomar la ubicación?\nLa actual fue escrita a mano y la nueva lectura del GPS la reemplazará.'
+          : '¿Está seguro de volver a tomar la ubicación?\nSe buscará una nueva lectura con el GPS y solo reemplazará la actual si es igual o mejor.'
+        if (!(await confirmar(texto, { si: 'Sí, volver a tomar', no: 'No' }))) return
+      }
+      capturar()
     },
     title: 'Mantén presionado 2 segundos para escribir las coordenadas',
   }
@@ -260,6 +274,7 @@ function CoordenadasManuales({
   onCerrar: () => void
   onGuardar: (lat: number, lng: number) => void
 }) {
+  useAtras(onCerrar)
   const [lat, setLat] = useState(inicial ? String(inicial.lat) : '')
   const [lng, setLng] = useState(inicial ? String(inicial.lng) : '')
   const num = (s: string) => Number(s.trim().replace(',', '.'))
@@ -316,11 +331,13 @@ function Fotos({ cuenta }: { cuenta: Cuenta }) {
     if (input.current) input.current.value = ''
   }
 
-  const quitar = async (fotoId: number) => {
-    if (confirm('¿Eliminar esta foto?')) {
-      await db.fotos.delete(fotoId)
-      setVisor(null)
-    }
+  const quitar = async (i: number) => {
+    const foto = fotos?.[i]
+    if (!foto) return
+    if (!(await confirmar('¿Está seguro de borrar esta foto?', { si: 'Sí, borrar', no: 'No', peligro: true }))) return
+    await db.fotos.delete(foto.id!)
+    const quedan = (fotos?.length ?? 1) - 1
+    setVisor(quedan === 0 ? null : Math.min(i, quedan - 1)) // sigue con la foto que quedó en su lugar
   }
 
   return (
@@ -341,7 +358,7 @@ function Fotos({ cuenta }: { cuenta: Cuenta }) {
         {error && <span className="error">{error}</span>}
       </div>
       {visor !== null && fotos?.[visor] && (
-        <Visor blob={fotos[visor].blob} onCerrar={() => setVisor(null)} onEliminar={() => quitar(fotos[visor].id!)} />
+        <Visor fotos={fotos.map((f) => f.blob)} indice={visor} onCambiar={setVisor} onCerrar={() => setVisor(null)} onEliminar={quitar} />
       )}
     </section>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { crearRespaldo, infoFotos } from './respaldo'
+import { useAtras } from './atras'
 
 const tamano = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`)
 
@@ -10,6 +11,7 @@ export default function RespaldoRuta({ ruta, onCerrar }: { ruta: { id: number; n
   const [listo, setListo] = useState<{ archivo: File; fotos: number } | null>(null)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  useAtras(() => (trabajando ? false : onCerrar())) // mientras prepara el archivo, atrás no cierra
 
   useEffect(() => {
     infoFotos(ruta.id).then(setFotos)

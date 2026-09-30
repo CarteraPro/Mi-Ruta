@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import './styles.css'
+import { instalarAtras } from './atras'
 
 registerSW({ immediate: true })
 // Pide que el sistema no borre los datos locales por falta de espacio.
@@ -20,5 +21,6 @@ document.addEventListener('selectstart', (e) => {
   if (!enCampo(e.target)) e.preventDefault()
 })
 document.addEventListener('dragstart', (e) => e.preventDefault())
+instalarAtras()
 
 createRoot(document.getElementById('root')!).render(<App />)

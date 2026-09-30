@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, moverCuenta, agregarCuenta, eliminarCuenta, puedeEliminar, type Color, type Cuenta } from './db'
 import { COLORES, colorEfectivo, distinta, esNuevo, veredasDerivadas } from './util'
 import { exportarRuta } from './exportar'
+import { useAtras } from './atras'
+import { confirmar } from './confirmar'
 
 interface Props {
   rutaId: number
@@ -19,6 +21,14 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
   const [destino, setDestino] = useState<number | null>(null)
   const [moviendoId, setMoviendoId] = useState<number | null>(null) // usuario en "modo mover"
   const [tick, setTick] = useState(0)
+  // atrás: primero sale del modo mover; después cierra la lista
+  useAtras(() => {
+    if (moviendoId !== null) {
+      setMoviendoId(null)
+      return false
+    }
+    onCerrar()
+  })
   const contRef = useRef<HTMLUListElement>(null)
   const yRef = useRef(0)
   const xRef = useRef(0)
@@ -273,6 +283,7 @@ function Opciones({
   onMover: () => void
   onEliminar: () => void
 }) {
+  useAtras(onCerrar)
   const [vereda, setVereda] = useState(cuenta.inicioVereda ?? cuenta.direccion)
   const guardar = (c: Partial<Cuenta>) => db.cuentas.update(cuenta.id!, c)
   const pintar = (color: Color | undefined) => guardar({ color })
@@ -340,8 +351,8 @@ function Opciones({
         {puedeEliminar(cuenta) ? (
           <button
             className="pequeno peligro-b"
-            onClick={() => {
-              if (confirm(`¿Eliminar a "${cuenta.nombre || cuenta.niu}" con sus fotos? No se puede deshacer.`)) onEliminar()
+            onClick={async () => {
+              if (await confirmar(`¿Está seguro de eliminar a "${cuenta.nombre || cuenta.niu}"?\nSe borrarán también sus fotos. No se puede deshacer.`, { si: 'Sí, eliminar', no: 'No', peligro: true })) onEliminar()
             }}
           >
             🗑 Eliminar usuario
@@ -363,15 +374,16 @@ function NuevoUsuario({
   onCerrar: () => void
   onCrear: (d: { niu: string; nombre: string; medidor: string; direccion: string }) => void
 }) {
+  useAtras(onCerrar)
   const [niu, setNiu] = useState('')
   const [nombre, setNombre] = useState('')
   const [medidor, setMedidor] = useState('')
   const [direccion, setDireccion] = useState('')
 
-  const crear = () => {
+  const crear = async () => {
     const n = niu.trim()
     if (!n) return
-    if (cuentas.some((c) => c.niu === n) && !confirm(`Ya existe un usuario con NIU ${n}. ¿Agregarlo de todos modos?`)) return
+    if (cuentas.some((c) => c.niu === n) && !(await confirmar(`Ya existe un usuario con NIU ${n}.\n¿Agregarlo de todos modos?`, { si: 'Sí, agregar', no: 'No' }))) return
     onCrear({ niu: n, nombre: nombre.trim(), medidor: medidor.trim(), direccion: direccion.trim() })
   }
 

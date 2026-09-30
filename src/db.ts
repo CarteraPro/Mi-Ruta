@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 
-// Claves fijas: 'normal' (Lectura real), 'casa_desocupada', 'local_desocupado' (Sin acometida ni medidor).
+// '' = sin estado (todavía no se ha elegido). Claves fijas: 'normal' (Lectura real), 'casa_desocupada', 'local_desocupado' (Sin acometida ni medidor).
 // Los estados creados por el usuario se guardan como `extra:<texto>`.
 export type Estado = string
 
@@ -83,6 +83,28 @@ class MiRutaDB extends Dexie {
       copias: 'rutaId',
       estadosExtra: '++id',
     })
+    // v4: el estado por defecto pasa a ser "sin estado" ('') hasta que el liniero elija uno. Los usuarios que
+    // seguían con el 'normal' de fábrica (sin nota, promedio, ubicación ni fotos) quedan sin estado; los que ya
+    // tienen algún trabajo encima conservan "Lectura real".
+    this.version(4)
+      .stores({
+        rutas: '++id',
+        cuentas: '++id, rutaId, [rutaId+orden]',
+        fotos: '++id, cuentaId, rutaId',
+        copias: 'rutaId',
+        estadosExtra: '++id',
+      })
+      .upgrade(async (tx) => {
+        const conFoto = new Set<number>()
+        await tx.table('fotos').each((f) => conFoto.add(f.cuentaId))
+        await tx
+          .table('cuentas')
+          .toCollection()
+          .modify((c: Cuenta) => {
+            const sinTrabajo = !c.nota && !c.promedio && c.lat === undefined && !conFoto.has(c.id!)
+            if (c.estado === 'normal' && sinTrabajo) c.estado = ''
+          })
+      })
   }
 }
 
@@ -116,7 +138,7 @@ export async function agregarCuenta(
   datos: Pick<Cuenta, 'niu' | 'nombre' | 'medidor' | 'direccion'>,
 ) {
   return db.transaction('rw', db.cuentas, async () => {
-    const nueva: Cuenta = { ...datos, rutaId, orden: despuesDe + 1, estado: 'normal', nota: '', promedio: '', manual: true }
+    const nueva: Cuenta = { ...datos, rutaId, orden: despuesDe + 1, estado: '', nota: '', promedio: '', manual: true }
     nueva.id = await db.cuentas.add(nueva)
     const arr = [...cuentas]
     arr.splice(despuesDe + 1, 0, nueva)

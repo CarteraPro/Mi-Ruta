@@ -245,3 +245,22 @@ img { pointer-events: auto; }
 .color-auto.sel { border: 3px solid var(--texto); color: var(--texto); }
 .fila[class*='c-'] .fila-datos > span, .datos[class*='c-'] dt { color: #33403e; }
 .fila[class*='c-'] .pos { color: #0b4f49; }
+
+/* aviso corto (doble atrás para salir) y cuadro de confirmación */
+.toast { position: fixed; left: 50%; bottom: max(90px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: rgba(16, 32, 30, 0.92); color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 0.9rem; z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; max-width: 86vw; text-align: center; }
+.toast.visible { opacity: 1; }
+.dialogo-fondo { z-index: 40; align-items: center; padding: 20px; }
+.dialogo { background: #fff; border-radius: 18px; padding: 18px; width: 100%; max-width: 420px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+.dialogo p { margin: 0 0 16px; font-size: 1.05rem; line-height: 1.35; white-space: pre-line; }
+.dialogo-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dialogo-botones .grande { padding: 12px 8px; font-size: 1rem; }
+.grande.peligro-solido { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+
+/* visor: varias fotos */
+.visor-barra { align-items: center; }
+.visor-contador { color: #fff; font-weight: 700; }
+.visor-lienzo { position: relative; touch-action: pan-y; }
+.visor-lienzo.ampliada { touch-action: auto; }
+.visor-flecha { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 64px; border: none; border-radius: 12px; background: rgba(255, 255, 255, 0.18); color: #fff; font-size: 2.2rem; line-height: 1; z-index: 2; }
+.visor-flecha.izq { left: 6px; }
+.visor-flecha.der { right: 6px; }
