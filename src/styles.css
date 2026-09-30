@@ -228,3 +228,8 @@ img { pointer-events: auto; }
 .pantalla.centrada { justify-content: flex-start; }
 .pantalla.centrada > :first-child { margin-top: auto; }
 .pantalla.centrada > :last-child { margin-bottom: auto; }
+
+/* resumen de KML: encima de la hoja de Google Earth y puntos que se mueven mucho */
+.hoja-encima { z-index: 25; }
+.sec li.lejos { background: #fee2e2; border-radius: 8px; padding: 4px 6px; margin-left: -6px; }
+.sec li.lejos .diff { color: var(--rojo); font-weight: 700; }

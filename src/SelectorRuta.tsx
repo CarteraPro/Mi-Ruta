@@ -8,6 +8,7 @@ import { bloquear } from './Acceso'
 import { exportarRuta } from './exportar'
 import { importarRespaldo, infoFotos, leerManifiesto } from './respaldo'
 import RespaldoRuta from './RespaldoRuta'
+import EarthRuta from './EarthRuta'
 
 const fechaCorta = (t: number) => new Date(t).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 
@@ -31,6 +32,7 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
   const [plan, setPlan] = useState<{ plan: Plan; ruta: string } | null>(null)
   const [respaldo, setRespaldo] = useState<{ id: number; nombre: string } | null>(null)
   const respaldoRef = useRef<HTMLInputElement>(null)
+  const [earth, setEarth] = useState<{ id: number; nombre: string } | null>(null)
 
   const subir = async (file: File | undefined) => {
     if (!file) return
@@ -88,11 +90,11 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
   const deshacer = async (id: number, fecha: number) => {
     if (
       confirm(
-        `¿Deshacer la actualización del ${fechaCorta(fecha)}? La ruta vuelve a como estaba antes; se pierden los cambios hechos después (notas, fotos, orden…).`,
+        `¿Deshacer el último cambio masivo (actualización con Excel o importación de KML) del ${fechaCorta(fecha)}? La ruta vuelve a como estaba antes; se pierden los cambios hechos después (notas, fotos, orden…).`,
       )
     ) {
       await deshacerActualizacion(id)
-      setAviso('Actualización deshecha.')
+      setAviso('Cambio deshecho.')
     }
   }
 
@@ -165,6 +167,9 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
               <button className="accion" aria-label="Respaldo para otro celular" disabled={cargando} onClick={() => setRespaldo({ id: r.id!, nombre: r.nombre })}>
                 📦 Respaldo
               </button>
+              <button className="accion" aria-label="Google Earth" disabled={cargando} onClick={() => setEarth({ id: r.id!, nombre: r.nombre })}>
+                🌍 Earth
+              </button>
               <button
                 className="accion"
                 aria-label="Actualizar con un Excel nuevo"
@@ -182,7 +187,7 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
             </div>
             {r.copia && (
               <button className="enlace" onClick={() => deshacer(r.id!, r.copia!)}>
-                ↩ Deshacer la actualización del {fechaCorta(r.copia)}
+                ↩ Deshacer el último cambio masivo del {fechaCorta(r.copia)}
               </button>
             )}
           </div>
@@ -222,6 +227,7 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
       </button>
 
       {respaldo && <RespaldoRuta ruta={respaldo} onCerrar={() => setRespaldo(null)} />}
+      {earth && <EarthRuta ruta={earth} onCerrar={() => setEarth(null)} />}
 
       {plan && <Resumen plan={plan.plan} ruta={plan.ruta} ocupado={cargando} onCancelar={() => setPlan(null)} onAplicar={aplicar} />}
     </main>
