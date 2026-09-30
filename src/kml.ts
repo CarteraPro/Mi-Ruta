@@ -1,6 +1,7 @@
 import { Zip, ZipDeflate, ZipPassThrough, strToU8 } from 'fflate'
 import { db, type Cuenta } from './db'
 import { textoEstado } from './Estados'
+import { colorEfectivo } from './util'
 
 export const UMBRAL_LEJOS_M = 100 // un punto que se mueve más que esto se resalta para revisarlo
 
@@ -12,11 +13,18 @@ const tieneUbic = (c: Cuenta) => typeof c.lat === 'number' && typeof c.lng === '
 
 // Color del usuario → color de KML (aaBBGGRR)
 const COLOR_KML: Record<string, string> = {
+  // elegidos a mano
+  amarillo: 'ff08d8fa',
+  azul: 'fff6823b',
+  // automáticos por estado (más fuertes que en pantalla para que el pin se vea en el mapa)
+  lectura: 'ff5ec722', // Lectura real: verde
+  casa: 'ff9a9afb', // Casa desocupada: rojo claro
+  sin: 'ff4444ef', // Sin acometida ni medidor: rojo
+  tomate: 'ff4370ff', // Medidor frenado / Promedio: tomate
+  // antiguos
   rojo: 'ff4444ef',
   naranja: 'ff1674f9',
-  amarillo: 'ff08d8fa',
   verde: 'ff5ec722',
-  azul: 'fff6823b',
 }
 
 // Nombre del punto = NIU. Si el mismo NIU está en varios usuarios, el segundo sale como "NIU (2)", etc.
@@ -64,7 +72,7 @@ export async function crearKml(rutaId: number, conFotos: boolean, onProgreso: (h
     }
   }
 
-  const usados = [...new Set(conPunto.map(({ c }) => c.color).filter(Boolean))] as string[]
+  const usados = [...new Set(conPunto.map(({ c }) => colorEfectivo(c)).filter(Boolean))] as string[]
   const estilos = usados
     .map(
       (col) =>
@@ -88,7 +96,7 @@ export async function crearKml(rutaId: number, conFotos: boolean, onProgreso: (h
       return (
         `<Placemark><name>${esc(nombre)}</name>` +
         `<description><![CDATA[${html}]]></description>` +
-        (c.color ? `<styleUrl>#u-${c.color}</styleUrl>` : '') +
+        (colorEfectivo(c) ? `<styleUrl>#u-${colorEfectivo(c)}</styleUrl>` : '') +
         `<ExtendedData><Data name="NIU"><value>${esc(c.niu)}</value></Data><Data name="Medidor"><value>${esc(c.medidor)}</value></Data></ExtendedData>` +
         // KML usa el orden longitud, latitud
         `<Point><coordinates>${c.lng},${c.lat},0</coordinates></Point></Placemark>`

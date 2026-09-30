@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cuenta } from './db'
 import Ficha from './Ficha'
 import Lista from './Lista'
-import { distinta, veredasDerivadas } from './util'
+import { colorEfectivo, distinta, veredasDerivadas } from './util'
 
 // En pantallas bajas solo cabe el vecino inmediato.
 function useVecinos() {
@@ -83,7 +83,7 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
           {it.texto}
         </div>
       ) : (
-        <button key={it.cuenta.id} className={it.cuenta.color ? `c-${it.cuenta.color}` : ''} onClick={() => ir(it.idx)}>
+        <button key={it.cuenta.id} className={colorEfectivo(it.cuenta) ? `c-${colorEfectivo(it.cuenta)}` : ''} onClick={() => ir(it.idx)}>
           {flecha} {it.cuenta.nombre || it.cuenta.niu}
         </button>
       ),

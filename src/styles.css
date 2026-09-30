@@ -233,3 +233,15 @@ img { pointer-events: auto; }
 .hoja-encima { z-index: 25; }
 .sec li.lejos { background: #fee2e2; border-radius: 8px; padding: 4px 6px; margin-left: -6px; }
 .sec li.lejos .diff { color: var(--rojo); font-weight: 700; }
+
+/* colores automáticos por estado */
+.c-lectura { background: #dcfce7 !important; } /* Lectura real: verde clarito */
+.c-casa { background: #fee2e2 !important; } /* Casa desocupada: rojo claro */
+.c-sin { background: #f87171 !important; } /* Sin acometida ni medidor: rojo */
+.c-tomate { background: #ff8a65 !important; } /* Medidor frenado y Promedio: tomate */
+/* con fondos más fuertes el texto gris no se lee bien */
+.vecinos button[class*='c-'] { color: var(--texto); }
+.color-auto { padding: 0 14px; height: 44px; border-radius: 22px; border: 2px solid var(--borde); background: #fff; font-weight: 600; font-size: 0.85rem; color: var(--suave); }
+.color-auto.sel { border: 3px solid var(--texto); color: var(--texto); }
+.fila[class*='c-'] .fila-datos > span, .datos[class*='c-'] dt { color: #33403e; }
+.fila[class*='c-'] .pos { color: #0b4f49; }

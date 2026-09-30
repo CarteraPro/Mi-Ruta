@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, moverCuenta, agregarCuenta, eliminarCuenta, puedeEliminar, type Color, type Cuenta } from './db'
-import { COLORES, distinta, esNuevo, veredasDerivadas } from './util'
+import { COLORES, colorEfectivo, distinta, esNuevo, veredasDerivadas } from './util'
 import { exportarRuta } from './exportar'
 
 interface Props {
@@ -130,7 +130,7 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                   data-idx={i}
                   className={
                     'fila' +
-                    (c.color ? ` c-${c.color}` : '') +
+                    (colorEfectivo(c) ? ` c-${colorEfectivo(c)}` : '') +
                     (c.id === actualId ? ' actual' : '') +
                     (c.id === moviendoId ? ' moviendo' : '') +
                     (arrastrando === i ? ' arrastrada' : '') +
@@ -294,9 +294,10 @@ function Opciones({
         )}
 
         <div className="hoja-tit">Color de fondo</div>
+        <p className="ayuda">Automático: lo pone el estado (Lectura real, Casa desocupada, Sin acometida…). Elige amarillo o azul para marcarlo a mano.</p>
         <div className="colores">
-          <button className={'color sin' + (!cuenta.color ? ' sel' : '')} onClick={() => pintar(undefined)} aria-label="Sin color">
-            ∅
+          <button className={'color-auto' + (!cuenta.color ? ' sel' : '')} onClick={() => pintar(undefined)} aria-label="Color automático según el estado">
+            Automático
           </button>
           {COLORES.map((c) => (
             <button

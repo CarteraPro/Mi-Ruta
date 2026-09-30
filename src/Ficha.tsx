@@ -4,7 +4,7 @@ import { db, type Cuenta } from './db'
 import Estados from './Estados'
 import { comprimirFoto } from './imagen'
 import Visor from './Visor'
-import { esNuevo } from './util'
+import { colorEfectivo, esNuevo } from './util'
 
 // La ubicación se guarda sola cuando el GPS tiene una precisión mejor (menor) a este valor, en metros.
 const PRECISION_MAX = 6
@@ -15,7 +15,7 @@ export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: str
 
   return (
     <article className="ficha">
-      <section className={'datos' + (cuenta.color ? ` c-${cuenta.color}` : '')}>
+      <section className={'datos' + (colorEfectivo(cuenta) ? ` c-${colorEfectivo(cuenta)}` : '')}>
         <div className="niu">
           <span>NIU {cuenta.niu}</span>
           {esNuevo(cuenta) && <span className="insignia nuevo">NUEVO</span>}
