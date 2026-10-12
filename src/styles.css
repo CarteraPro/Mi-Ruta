@@ -264,3 +264,6 @@ img { pointer-events: auto; }
 .visor-flecha { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 64px; border: none; border-radius: 12px; background: rgba(255, 255, 255, 0.18); color: #fff; font-size: 2.2rem; line-height: 1; z-index: 2; }
 .visor-flecha.izq { left: 6px; }
 .visor-flecha.der { right: 6px; }
+
+/* icono de "tiene ubicación" en la lista, entre el NIU y la dirección */
+.fila-datos .pin { font-style: normal; font-size: 0.78rem; margin: 0 5px; }

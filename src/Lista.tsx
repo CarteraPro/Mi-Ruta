@@ -160,7 +160,15 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                       {c.anulada && <span className="insignia anulada">ANULADA</span>}
                     </strong>
                     <span>
-                      NIU {c.niu} · {c.direccion || 'sin dirección'}
+                      NIU {c.niu}
+                      {c.lat !== undefined && c.lng !== undefined ? (
+                        <i className="pin" role="img" aria-label="Tiene ubicación capturada" title="Tiene ubicación capturada">
+                          📍
+                        </i>
+                      ) : (
+                        ' · '
+                      )}
+                      {c.direccion || 'sin dirección'}
                     </span>
                     {distinta(v, c.direccion) && <em>Vereda: {v}</em>}
                   </button>
