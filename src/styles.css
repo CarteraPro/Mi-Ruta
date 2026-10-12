@@ -267,3 +267,18 @@ img { pointer-events: auto; }
 
 /* icono de "tiene ubicación" en la lista, entre el NIU y la dirección */
 .fila-datos .pin { font-style: normal; font-size: 0.78rem; margin: 0 5px; }
+
+/* estados editables: punto de color en los botones, paleta y filas de edición */
+.c-morado { background: #e9d5ff !important; }
+.c-gris { background: #e2e8f0 !important; }
+.chip .punto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; border: 1px solid rgba(0, 0, 0, 0.25); flex: none; }
+.chip.activo .punto { border-color: rgba(255, 255, 255, 0.8); }
+.punto.grande { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--borde); flex: none; }
+.paleta { display: flex; flex-wrap: wrap; gap: 8px; }
+.muestra { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--borde); font-size: 1rem; color: var(--suave); background: #fff; padding: 0; }
+.muestra.sel { border: 3px solid var(--texto); }
+.estado-fila { border: 1px solid var(--borde); border-radius: 12px; padding: 6px 8px; }
+.estado-cab { display: flex; align-items: center; gap: 8px; }
+.estado-nombre { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.estado-edicion { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 4px; }
+.estado-edicion .hoja-fila .grande { flex: 1; padding: 10px; }

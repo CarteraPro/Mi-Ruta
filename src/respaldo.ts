@@ -15,6 +15,7 @@ export interface Manifiesto {
   cuentas: CuentaRespaldo[]
   fotos: { cuenta: number; archivo: string; fecha: number }[]
   estadosExtra: string[]
+  estadosExtraColor?: Record<string, string> // color elegido para cada estado creado por el usuario
 }
 
 const norm = (s: string) => s.trim().toLowerCase()
@@ -61,7 +62,13 @@ export async function crearRespaldo(rutaId: number, conFotos: boolean, onProgres
     conFotos,
     cuentas: cuentas.map(({ id, rutaId: _r, ...resto }) => ({ ...resto, idOrigen: id! })),
     fotos: fotos.map(({ cuenta, archivo, fecha }) => ({ cuenta, archivo, fecha })),
-    estadosExtra: (await db.estadosExtra.toArray()).map((e) => e.texto),
+    ...(await (async () => {
+      const extras = await db.estadosExtra.toArray()
+      return {
+        estadosExtra: extras.map((e) => e.texto),
+        estadosExtraColor: Object.fromEntries(extras.filter((e) => e.color !== undefined).map((e) => [e.texto, e.color as string])),
+      }
+    })()),
   }
 
   const partes: Uint8Array[] = []
@@ -208,7 +215,8 @@ export async function importarRespaldo(file: File, m: Manifiesto, onProgreso: (t
 
     for (const texto of m.estadosExtra ?? []) {
       const existe = (await db.estadosExtra.toArray()).some((e) => norm(e.texto) === norm(texto))
-      if (!existe) await db.estadosExtra.add({ texto })
+      const color = m.estadosExtraColor?.[texto]
+      if (!existe) await db.estadosExtra.add({ texto, ...(color !== undefined ? { color } : {}) })
     }
     // solo cuando todo salió bien se elimina la ruta anterior del mismo nombre
     for (const a of anteriores) await borrarRuta(a.id!)

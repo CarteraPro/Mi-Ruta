@@ -8,6 +8,14 @@ export type Estado = string
 export interface EstadoExtra {
   id?: number
   texto: string
+  color?: string // clave de color; 'ninguno' = sin color; sin definir = el que traiga por defecto según su nombre
+}
+
+// Ajustes de los 3 estados fijos (Lectura real, Casa desocupada, Sin acometida ni medidor): nombre y color propios.
+export interface AjusteEstado {
+  clave: string // 'normal' | 'casa_desocupada' | 'local_desocupado'
+  texto?: string
+  color?: string // clave de color; 'ninguno' = sin color; sin definir = el de fábrica
 }
 export type Color = 'rojo' | 'naranja' | 'amarillo' | 'verde' | 'azul'
 
@@ -62,6 +70,7 @@ class MiRutaDB extends Dexie {
   fotos!: Table<Foto, number>
   copias!: Table<Copia, number>
   estadosExtra!: Table<EstadoExtra, number>
+  ajustesEstado!: Table<AjusteEstado, string>
 
   constructor() {
     super('mi-ruta')
@@ -105,6 +114,15 @@ class MiRutaDB extends Dexie {
             if (c.estado === 'normal' && sinTrabajo) c.estado = ''
           })
       })
+    // v5: nombre y color propios para cada estado (tabla de ajustes de los 3 estados fijos)
+    this.version(5).stores({
+      rutas: '++id',
+      cuentas: '++id, rutaId, [rutaId+orden]',
+      fotos: '++id, cuentaId, rutaId',
+      copias: 'rutaId',
+      estadosExtra: '++id',
+      ajustesEstado: 'clave',
+    })
   }
 }
 

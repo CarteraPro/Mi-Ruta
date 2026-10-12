@@ -5,6 +5,7 @@ import Ficha from './Ficha'
 import Lista from './Lista'
 import { colorEfectivo, distinta, veredasDerivadas } from './util'
 import { useAtras } from './atras'
+import { useConfigEstados } from './estadosConfig'
 
 // En pantallas bajas solo cabe el vecino inmediato.
 function useVecinos() {
@@ -29,6 +30,7 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
   const [lista, setLista] = useState(false)
   const ultimoIdx = useRef(0)
   useAtras(onCambiarRuta) // atrás desde el recorrido vuelve a la lista de rutas
+  const cfg = useConfigEstados()
 
   const VECINOS = useVecinos()
   const veredas = useMemo(() => (cuentas ? veredasDerivadas(cuentas) : []), [cuentas])
@@ -85,7 +87,7 @@ export default function Recorrido({ rutaId, onCambiarRuta }: { rutaId: number; o
           {it.texto}
         </div>
       ) : (
-        <button key={it.cuenta.id} className={colorEfectivo(it.cuenta) ? `c-${colorEfectivo(it.cuenta)}` : ''} onClick={() => ir(it.idx)}>
+        <button key={it.cuenta.id} className={colorEfectivo(it.cuenta, cfg) ? `c-${colorEfectivo(it.cuenta, cfg)}` : ''} onClick={() => ir(it.idx)}>
           {flecha} {it.cuenta.nombre || it.cuenta.niu}
         </button>
       ),

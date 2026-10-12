@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cuenta } from './db'
 import Estados from './Estados'
 import { confirmar } from './confirmar'
+import { useConfigEstados } from './estadosConfig'
 import { useAtras } from './atras'
 import { comprimirFoto } from './imagen'
 import Visor from './Visor'
@@ -14,10 +15,11 @@ const PRECISION_MAX = 6
 export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: string | null }) {
   const id = cuenta.id!
   const guardar = (cambios: Partial<Cuenta>) => db.cuentas.update(id, cambios)
+  const cfg = useConfigEstados()
 
   return (
     <article className="ficha">
-      <section className={'datos' + (colorEfectivo(cuenta) ? ` c-${colorEfectivo(cuenta)}` : '')}>
+      <section className={'datos' + (colorEfectivo(cuenta, cfg) ? ` c-${colorEfectivo(cuenta, cfg)}` : '')}>
         <div className="niu">
           <span>NIU {cuenta.niu}</span>
           {esNuevo(cuenta) && <span className="insignia nuevo">NUEVO</span>}

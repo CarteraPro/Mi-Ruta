@@ -1,6 +1,6 @@
 import { Zip, ZipDeflate, ZipPassThrough, strToU8 } from 'fflate'
 import { db, type Cuenta } from './db'
-import { textoEstado } from './Estados'
+import { cargarConfig } from './estadosConfig'
 import { colorEfectivo } from './util'
 
 export const UMBRAL_LEJOS_M = 100 // un punto que se mueve más que esto se resalta para revisarlo
@@ -16,6 +16,8 @@ const COLOR_KML: Record<string, string> = {
   // elegidos a mano
   amarillo: 'ff08d8fa',
   azul: 'fff6823b',
+  morado: 'fff7a8c4',
+  gris: 'ffb8a094',
   // automáticos por estado (más fuertes que en pantalla para que el pin se vea en el mapa)
   lectura: 'ff5ec722', // Lectura real: verde
   casa: 'ff9a9afb', // Casa desocupada: rojo claro
@@ -72,7 +74,8 @@ export async function crearKml(rutaId: number, conFotos: boolean, onProgreso: (h
     }
   }
 
-  const usados = [...new Set(conPunto.map(({ c }) => colorEfectivo(c)).filter(Boolean))] as string[]
+  const cfg = await cargarConfig()
+  const usados = [...new Set(conPunto.map(({ c }) => colorEfectivo(c, cfg)).filter(Boolean))] as string[]
   const estilos = usados
     .map(
       (col) =>
@@ -86,7 +89,7 @@ export async function crearKml(rutaId: number, conFotos: boolean, onProgreso: (h
         ['Nombre', c.nombre],
         ['Medidor', c.medidor],
         ['Dirección', c.direccion],
-        ['Estado', textoEstado(c.estado)],
+        ['Estado', cfg.texto(c.estado)],
         c.promedio ? ['Promedio', c.promedio] : null,
         c.nota ? ['Notas', c.nota] : null,
         c.anulada ? ['Matrícula', 'ANULADA'] : null,
@@ -96,7 +99,7 @@ export async function crearKml(rutaId: number, conFotos: boolean, onProgreso: (h
       return (
         `<Placemark><name>${esc(nombre)}</name>` +
         `<description><![CDATA[${html}]]></description>` +
-        (colorEfectivo(c) ? `<styleUrl>#u-${colorEfectivo(c)}</styleUrl>` : '') +
+        (colorEfectivo(c, cfg) ? `<styleUrl>#u-${colorEfectivo(c, cfg)}</styleUrl>` : '') +
         `<ExtendedData><Data name="NIU"><value>${esc(c.niu)}</value></Data><Data name="Medidor"><value>${esc(c.medidor)}</value></Data></ExtendedData>` +
         // KML usa el orden longitud, latitud
         `<Point><coordinates>${c.lng},${c.lat},0</coordinates></Point></Placemark>`

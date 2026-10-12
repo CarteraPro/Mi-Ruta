@@ -4,6 +4,7 @@ import { COLORES, colorEfectivo, distinta, esNuevo, veredasDerivadas } from './u
 import { exportarRuta } from './exportar'
 import { useAtras } from './atras'
 import { confirmar } from './confirmar'
+import { useConfigEstados } from './estadosConfig'
 
 interface Props {
   rutaId: number
@@ -21,6 +22,7 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
   const [destino, setDestino] = useState<number | null>(null)
   const [moviendoId, setMoviendoId] = useState<number | null>(null) // usuario en "modo mover"
   const [tick, setTick] = useState(0)
+  const cfg = useConfigEstados()
   // atrás: primero sale del modo mover; después cierra la lista
   useAtras(() => {
     if (moviendoId !== null) {
@@ -140,7 +142,7 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                   data-idx={i}
                   className={
                     'fila' +
-                    (colorEfectivo(c) ? ` c-${colorEfectivo(c)}` : '') +
+                    (colorEfectivo(c, cfg) ? ` c-${colorEfectivo(c, cfg)}` : '') +
                     (c.id === actualId ? ' actual' : '') +
                     (c.id === moviendoId ? ' moviendo' : '') +
                     (arrastrando === i ? ' arrastrada' : '') +
