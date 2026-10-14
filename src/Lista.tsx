@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, moverCuenta, agregarCuenta, eliminarCuenta, puedeEliminar, type Color, type Cuenta } from './db'
-import { COLORES, colorEfectivo, distinta, esNuevo, veredasDerivadas } from './util'
+import { COLORES, coincideNota, colorEfectivo, distinta, esNuevo, terminosDe, veredasDerivadas } from './util'
+import ExcelNotas from './ExcelNotas'
 import { exportarRuta } from './exportar'
 import { useAtras } from './atras'
 import { confirmar } from './confirmar'
@@ -22,6 +23,7 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
   const [destino, setDestino] = useState<number | null>(null)
   const [moviendoId, setMoviendoId] = useState<number | null>(null) // usuario en "modo mover"
   const [tick, setTick] = useState(0)
+  const [excelNotas, setExcelNotas] = useState(false)
   const cfg = useConfigEstados()
   // atrás: primero sale del modo mover; después cierra la lista
   useAtras(() => {
@@ -40,12 +42,19 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
 
   const veredas = useMemo(() => veredasDerivadas(cuentas), [cuentas])
   const t = q.trim().toLowerCase()
+  const [enNotas, setEnNotas] = useState(false) // buscar solo dentro de las notas
   const visibles = useMemo(
     () =>
       cuentas
         .map((c, i) => ({ c, i }))
-        .filter(({ c }) => !t || `${c.nombre} ${c.niu} ${c.medidor} ${c.direccion}`.toLowerCase().includes(t)),
-    [cuentas, t],
+        .filter(({ c }) =>
+          !t
+            ? true
+            : enNotas
+              ? coincideNota(c.nota, terminosDe(q)) // en notas: varias palabras separadas por coma = cualquiera
+              : `${c.nombre} ${c.niu} ${c.medidor} ${c.direccion}`.toLowerCase().includes(t),
+        ),
+    [cuentas, t, q, enNotas],
   )
 
   // Al abrir, deja a la vista la cuenta actual.
@@ -111,7 +120,20 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
     <div className="modal">
       <div className="modal-caja">
         <div className="modal-cab">
-          <input placeholder="Buscar nombre, NIU, medidor o dirección" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input
+            placeholder={enNotas ? 'Buscar dentro de las notas' : 'Buscar nombre, NIU, medidor o dirección'}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <button
+            className={'icono buscar-notas' + (enNotas ? ' activo' : '')}
+            onClick={() => setEnNotas((v) => !v)}
+            aria-label="Buscar solo dentro de las notas"
+            aria-pressed={enNotas}
+            title="Buscar solo dentro de las notas"
+          >
+            📝
+          </button>
           <button className="icono" onClick={onCerrar} aria-label="Cerrar">
             ✕
           </button>
@@ -123,12 +145,17 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
           <button className="pequeno" onClick={() => exportarRuta(rutaId).catch(() => alert('No se pudo exportar'))}>
             ⬇ Excel
           </button>
+          <button className="pequeno" onClick={() => setExcelNotas(true)}>
+            📝 Excel de notas
+          </button>
           <span>
             {moviendoId !== null
               ? 'Desliza el usuario resaltado o escribe su posición'
               : t
-                ? `${visibles.length} resultados`
-                : `${cuentas.length} usuarios · ⋮ → Mover para reordenar`}
+                ? `${visibles.length} resultados${enNotas ? ' en las notas' : ''}`
+                : enNotas
+                  ? 'Buscando solo dentro de las notas'
+                  : `${cuentas.length} usuarios · ⋮ → Mover para reordenar`}
           </span>
         </div>
 
@@ -173,6 +200,7 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
                       {c.direccion || 'sin dirección'}
                     </span>
                     {distinta(v, c.direccion) && <em>Vereda: {v}</em>}
+                    {enNotas && t && c.nota.trim() && <em className="nota-fila">📝 {c.nota.trim()}</em>}
                   </button>
                   {c.id === moviendoId ? (
                     <span className="mover-icono" aria-hidden>
@@ -222,6 +250,8 @@ export default function Lista({ rutaId, cuentas, actualId, onIr, onCerrar }: Pro
           }}
         />
       )}
+
+      {excelNotas && <ExcelNotas rutaId={rutaId} cuentas={cuentas} onCerrar={() => setExcelNotas(false)} />}
 
       {nuevo && (
         <NuevoUsuario

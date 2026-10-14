@@ -282,3 +282,11 @@ img { pointer-events: auto; }
 .estado-nombre { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .estado-edicion { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 4px; }
 .estado-edicion .hoja-fila .grande { flex: 1; padding: 10px; }
+
+/* búsqueda en notas y Excel de notas */
+.buscar-notas { flex: none; border: 2px solid transparent; }
+.buscar-notas.activo { background: var(--verde-claro); border-color: var(--verde); }
+.lista-barra { flex-wrap: wrap; row-gap: 6px; }
+.fila-datos .nota-fila { color: #33403e; font-style: normal; font-weight: 500; white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.frecuentes { display: flex; flex-wrap: wrap; gap: 6px; }
+.frecuentes .chip { min-height: 34px; padding: 4px 12px; font-size: 0.85rem; }
