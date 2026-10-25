@@ -61,7 +61,7 @@ export async function guardarCredenciales(cred: Credenciales) {
   localStorage.setItem(LS_CRED, JSON.stringify({ iv: aB64(iv), datos: aB64(datos) }))
 }
 
-async function leerCredenciales(): Promise<Credenciales> {
+export async function leerCredenciales(): Promise<Credenciales> {
   const guardado = localStorage.getItem(LS_CRED)
   const llave = await leerLlave()
   if (!guardado || !llave) throw new Error('Faltan las credenciales — configúralas con el botón 🔑')
@@ -82,13 +82,18 @@ export async function consultarPago(niu: string): Promise<ResultadoPago> {
   if (!data.ok) throw new Error(data.message || 'No se pudo consultar')
   // El servidor nuevo siempre responde `adeudado` (número o null); si falta, sigue con la versión anterior.
   if (!('adeudado' in data)) throw new Error(`Servidor sin valores. Campos: ${Object.keys(data).join(', ')}`)
+  return aResultado(data)
+}
+
+// Convierte lo que responde el servidor (consulta puntual o resultado de un escaneo) en el resultado que guarda la ficha.
+export function aResultado(data: any): ResultadoPago {
   return {
     ultimoPago: data.ultimoPago,
     valorPagado: data.valorPagado ?? null,
     adeudado: data.adeudado ?? null,
     periodosPendientes: (data.facturasPendientes ?? []).map((f: { periodo: string }) => f.periodo),
     consumoKwh: typeof data.consumoKwh === 'number' ? data.consumoKwh : null,
-    alDia: !!data.alDia,
+    alDia: !!(data.alDia ?? data.pagado),
     consultadoEn: Date.now(),
   }
 }

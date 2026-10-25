@@ -301,3 +301,8 @@ img { pointer-events: auto; }
 .resultado-pago small { font-size: 0.75rem; color: var(--suave); }
 .resultado-pago.al-dia strong { color: var(--verde); }
 .resultado-pago.debe strong { color: var(--rojo); }.resultado-pago small.adeudado { color: var(--rojo); font-weight: 700; }
+
+/* Consultar toda la ruta */
+.consulta-ruta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.consulta-ruta-texto { font-size: 0.85rem; color: var(--suave); flex: 1; }
+.consulta-ruta .accion { flex: 1; }

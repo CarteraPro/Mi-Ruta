@@ -10,6 +10,7 @@ import { importarRespaldo, infoFotos, leerManifiesto } from './respaldo'
 import RespaldoRuta from './RespaldoRuta'
 import EarthRuta from './EarthRuta'
 import { confirmar } from './confirmar'
+import ConsultarRuta from './ConsultarRuta'
 
 const fechaCorta = (t: number) => new Date(t).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 
@@ -187,6 +188,7 @@ export default function SelectorRuta({ onElegir }: { onElegir: (id: number) => v
                 🗑
               </button>
             </div>
+            <ConsultarRuta rutaId={r.id!} nombre={r.nombre} onAviso={setAviso} />
             {r.copia && (
               <button className="enlace" onClick={() => deshacer(r.id!, r.copia!)}>
                 ↩ Deshacer el último cambio masivo del {fechaCorta(r.copia)}

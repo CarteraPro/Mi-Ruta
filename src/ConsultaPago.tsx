@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { db, type Cuenta } from './db'
 import { useAtras } from './atras'
+import { cambiosDeConsulta } from './consulta'
 import { consultarPago, guardarCredenciales, hayCredenciales } from './pagoOracle'
 
 const formatoPesos = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 })
@@ -21,10 +22,8 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
     setCargando(true)
     try {
       const pagoConsulta = await consultarPago(cuenta.niu)
-      // El consumo del mes de la última factura queda como promedio de consumo (solo si el portal lo dio).
-      const cambios: Partial<Cuenta> = { pagoConsulta }
-      if (pagoConsulta.consumoKwh !== null) cambios.promedio = String(pagoConsulta.consumoKwh)
-      await db.cuentas.update(cuenta.id!, cambios)
+      // Guarda el resultado y suma el consumo de este mes al historial de 3 meses (el promedio se recalcula).
+      await db.cuentas.update(cuenta.id!, cambiosDeConsulta(cuenta, pagoConsulta))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo consultar')
     }
@@ -68,7 +67,7 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
   )
 }
 
-function HojaCredenciales({ onCerrar, onListo }: { onCerrar: () => void; onListo: () => void }) {
+export function HojaCredenciales({ onCerrar, onListo }: { onCerrar: () => void; onListo: () => void }) {
   useAtras(onCerrar)
   const [usuario, setUsuario] = useState('')
   const [clave, setClave] = useState('')
