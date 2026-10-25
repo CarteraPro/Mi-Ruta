@@ -15,6 +15,9 @@ interface Boveda {
   datos: string
 }
 export interface ResultadoPago {
+  adeudado: number | null // solo si no está al día: suma de las facturas pendientes
+  periodosPendientes: string[]
+  valorPagado: string | null // valor del último pago, tal cual lo da el portal
   ultimoPago: string // texto tal cual lo da el portal, o 'Sin pagos registrados'
   alDia: boolean
   consultadoEn: number
@@ -75,5 +78,5 @@ export async function consultarPago(niu: string): Promise<ResultadoPago> {
   })
   const data = await res.json()
   if (!data.ok) throw new Error(data.message || 'No se pudo consultar')
-  return { ultimoPago: data.ultimoPago, alDia: !!data.alDia, consultadoEn: Date.now() }
+  return { ultimoPago: data.ultimoPago, valorPagado: data.valorPagado ?? null, adeudado: data.adeudado ?? null, periodosPendientes: (data.facturasPendientes ?? []).map((f: { periodo: string }) => f.periodo), alDia: !!data.alDia, consultadoEn: Date.now() }
 }

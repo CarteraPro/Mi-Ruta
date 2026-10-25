@@ -300,4 +300,4 @@ img { pointer-events: auto; }
 .resultado-pago strong { font-size: 0.9rem; }
 .resultado-pago small { font-size: 0.75rem; color: var(--suave); }
 .resultado-pago.al-dia strong { color: var(--verde); }
-.resultado-pago.debe strong { color: var(--rojo); }
+.resultado-pago.debe strong { color: var(--rojo); }.resultado-pago small.adeudado { color: var(--rojo); font-weight: 700; }

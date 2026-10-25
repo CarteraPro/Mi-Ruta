@@ -3,6 +3,8 @@ import { db, type Cuenta } from './db'
 import { useAtras } from './atras'
 import { consultarPago, desbloqueadas, desbloquear, guardarCredenciales, hayCredenciales } from './pagoOracle'
 
+const formatoPesos = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 })
+
 // Muestra solo dos datos del portal Oracle: cuándo fue el último pago y si el usuario está al día.
 export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
   const [cargando, setCargando] = useState(false)
@@ -35,7 +37,14 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
         {r && !cargando && !error && (
           <span className={'resultado-pago ' + (r.alDia ? 'al-dia' : 'debe')} title={`Consultado ${new Date(r.consultadoEn).toLocaleString('es-CO')}`}>
             <strong>{r.alDia ? '✅ Al día' : '❌ No al día'}</strong>
-            <small>Último pago: {r.ultimoPago}</small>
+            <small>Último pago: {r.ultimoPago}{r.valorPagado ? ` · ${r.valorPagado}` : ''}</small>
+            {!r.alDia && r.adeudado !== null && r.adeudado !== undefined && (
+              <small className="adeudado">
+                {r.adeudado > 0
+                  ? `Debe: ${formatoPesos(r.adeudado)}${r.periodosPendientes?.length ? ` (${r.periodosPendientes.join(', ')})` : ''}`
+                  : 'Sin facturas pendientes'}
+              </small>
+            )}
           </span>
         )}
         {error && <span className="error">{error.length > 70 ? error.slice(0, 70) + '…' : error}</span>}
