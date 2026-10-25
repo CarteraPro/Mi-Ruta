@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cuenta } from './db'
 import Estados from './Estados'
+import ConsultaPago from './ConsultaPago'
 import { confirmar } from './confirmar'
 import { useConfigEstados } from './estadosConfig'
 import { useAtras } from './atras'
@@ -58,6 +59,8 @@ export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: str
         </label>
         <Ubicacion cuenta={cuenta} onGuardar={guardar} />
       </div>
+
+      <ConsultaPago cuenta={cuenta} />
 
       <Fotos cuenta={cuenta} />
 

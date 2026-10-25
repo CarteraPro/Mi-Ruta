@@ -290,3 +290,14 @@ img { pointer-events: auto; }
 .fila-datos .nota-fila { color: #33403e; font-style: normal; font-weight: 500; white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .frecuentes { display: flex; flex-wrap: wrap; gap: 6px; }
 .frecuentes .chip { min-height: 34px; padding: 4px 12px; font-size: 0.85rem; }
+
+/* Consulta de pago (portal Oracle) */
+.consulta-pago { display: flex; align-items: center; gap: 8px; }
+.consulta-pago .pequeno { flex: none; }
+.consulta-info { flex: 1; min-width: 0; }
+.consulta-info .error { font-size: 0.75rem; margin: 0; display: block; line-height: 1.2; }
+.resultado-pago { display: flex; flex-direction: column; line-height: 1.2; }
+.resultado-pago strong { font-size: 0.9rem; }
+.resultado-pago small { font-size: 0.75rem; color: var(--suave); }
+.resultado-pago.al-dia strong { color: var(--verde); }
+.resultado-pago.debe strong { color: var(--rojo); }

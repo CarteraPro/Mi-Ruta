@@ -47,6 +47,7 @@ export interface Cuenta {
   anulada?: boolean // ya no viene en el Excel de la empresa (matrícula anulada)
   nuevoHasta?: number // marca "NUEVO" hasta esta fecha (15 días tras cargarla desde un Excel)
   manual?: boolean // agregada a mano: nunca se anula por no venir en el Excel
+  pagoConsulta?: { ultimoPago: string; alDia: boolean; consultadoEn: number } // última consulta al portal Oracle
 }
 
 // Copia de la ruta antes de la última actualización con Excel (para deshacer).
