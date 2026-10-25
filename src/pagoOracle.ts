@@ -80,7 +80,7 @@ export async function consultarPago(niu: string): Promise<ResultadoPago> {
   const data = await res.json()
   if (!data.ok) throw new Error(data.message || 'No se pudo consultar')
   // El servidor nuevo siempre responde `adeudado` (número o null); si falta, sigue con la versión anterior.
-  if (!('adeudado' in data)) throw new Error('El servidor aún tiene la versión anterior (sin valores). Espera a que termine de actualizarse.')
+  if (!('adeudado' in data)) throw new Error(`Servidor sin valores. Campos: ${Object.keys(data).join(', ')}`)
   return {
     ultimoPago: data.ultimoPago,
     valorPagado: data.valorPagado ?? null,
