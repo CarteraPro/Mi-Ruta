@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { db, type Cuenta } from './db'
 import { useAtras } from './atras'
-import { consultarPago, desbloqueadas, desbloquear, guardarCredenciales, hayCredenciales } from './pagoOracle'
+import { consultarPago, guardarCredenciales, hayCredenciales } from './pagoOracle'
 
 const formatoPesos = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 })
 
@@ -9,13 +9,13 @@ const formatoPesos = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFra
 export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
-  const [hoja, setHoja] = useState<'desbloquear' | 'editar' | null>(null)
+  const [hoja, setHoja] = useState(false)
   const r = cuenta.pagoConsulta
 
   const consultar = async () => {
     setError('')
-    if (!desbloqueadas()) {
-      setHoja(hayCredenciales() ? 'desbloquear' : 'editar')
+    if (!hayCredenciales()) {
+      setHoja(true)
       return
     }
     setCargando(true)
@@ -49,16 +49,14 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
         )}
         {error && <span className="error">{error.length > 70 ? error.slice(0, 70) + '…' : error}</span>}
       </div>
-      <button className="enlace" onClick={() => setHoja(hayCredenciales() ? 'desbloquear' : 'editar')} aria-label="Credenciales del portal">
+      <button className="enlace" onClick={() => setHoja(true)} aria-label="Credenciales del portal">
         🔑
       </button>
       {hoja && (
         <HojaCredenciales
-          modo={hoja}
-          onCambiar={setHoja}
-          onCerrar={() => setHoja(null)}
+          onCerrar={() => setHoja(false)}
           onListo={() => {
-            setHoja(null)
+            setHoja(false)
             consultar()
           }}
         />
@@ -67,41 +65,24 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
   )
 }
 
-function HojaCredenciales({
-  modo,
-  onCambiar,
-  onCerrar,
-  onListo,
-}: {
-  modo: 'desbloquear' | 'editar'
-  onCambiar: (m: 'desbloquear' | 'editar') => void
-  onCerrar: () => void
-  onListo: () => void
-}) {
+function HojaCredenciales({ onCerrar, onListo }: { onCerrar: () => void; onListo: () => void }) {
   useAtras(onCerrar)
   const [usuario, setUsuario] = useState('')
   const [clave, setClave] = useState('')
-  const [pin, setPin] = useState('')
   const [msg, setMsg] = useState('')
   const [ocupado, setOcupado] = useState(false)
-  const editar = modo === 'editar'
 
-  const aceptar = async () => {
+  const guardar = async () => {
     setMsg('')
     setOcupado(true)
     try {
-      if (editar) {
-        await guardarCredenciales({ usuario: usuario.trim(), clave }, pin)
-      } else {
-        await desbloquear(pin)
-      }
+      await guardarCredenciales({ usuario: usuario.trim(), clave })
       onListo()
     } catch {
-      setMsg(editar ? 'No se pudieron guardar' : 'Clave de desbloqueo incorrecta')
+      setMsg('No se pudieron guardar')
     }
     setOcupado(false)
   }
-  const valido = editar ? usuario.trim() !== '' && clave !== '' && pin.length >= 4 : pin !== ''
 
   return (
     <div className="hoja-fondo" onClick={onCerrar}>
@@ -113,37 +94,22 @@ function HojaCredenciales({
           </button>
         </div>
         <p className="ayuda">
-          {editar
-            ? 'Se guardan cifradas solo en este celular. La clave de desbloqueo no se puede recuperar: si la olvidas, vuelve a escribir las credenciales.'
-            : 'Escribe tu clave de desbloqueo para usar las credenciales guardadas.'}
+          {hayCredenciales()
+            ? 'Ya hay credenciales guardadas para toda la ruta. Escribe unas nuevas solo si cambiaron.'
+            : 'Se escriben una sola vez, sirven para todos los usuarios y quedan cifradas solo en este celular.'}
         </p>
-        {editar && (
-          <>
-            <label>
-              Usuario
-              <input autoFocus autoCapitalize="off" autoComplete="off" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
-            </label>
-            <label>
-              Contraseña del portal
-              <input type="password" autoComplete="new-password" value={clave} onChange={(e) => setClave(e.target.value)} />
-            </label>
-          </>
-        )}
         <label>
-          {editar ? 'Crea una clave de desbloqueo (mínimo 4)' : 'Clave de desbloqueo'}
-          <input type="password" autoFocus={!editar} autoComplete="off" value={pin} onChange={(e) => setPin(e.target.value)} />
+          Usuario
+          <input autoFocus autoCapitalize="off" autoComplete="off" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
+        </label>
+        <label>
+          Contraseña del portal
+          <input type="password" autoComplete="new-password" value={clave} onChange={(e) => setClave(e.target.value)} />
         </label>
         {msg && <p className="error">{msg}</p>}
-        <div className="hoja-fila">
-          {!editar && (
-            <button className="grande" onClick={() => onCambiar('editar')}>
-              Cambiar
-            </button>
-          )}
-          <button className="grande primario" disabled={!valido || ocupado} onClick={aceptar}>
-            {editar ? 'Guardar' : 'Desbloquear'}
-          </button>
-        </div>
+        <button className="grande primario" disabled={usuario.trim() === '' || clave === '' || ocupado} onClick={guardar}>
+          Guardar
+        </button>
       </div>
     </div>
   )
