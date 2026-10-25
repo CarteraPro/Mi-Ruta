@@ -103,6 +103,14 @@ function TextoGuardado({
     pendiente.current = window.setTimeout(volcar, 600)
   }
   useEffect(() => volcar, []) // guarda al cambiar de cuenta
+  // Si el valor cambia desde fuera (p. ej. la consulta de pago llena el promedio) y no hay una edición sin guardar, se refleja.
+  useEffect(() => {
+    if (valor !== ultimo.current && vRef.current === ultimo.current) {
+      ultimo.current = valor
+      vRef.current = valor
+      setV(valor)
+    }
+  }, [valor])
 
   return multilinea ? (
     <textarea value={v} placeholder={rest.placeholder} onChange={(e) => cambiar(e.target.value)} onBlur={volcar} />

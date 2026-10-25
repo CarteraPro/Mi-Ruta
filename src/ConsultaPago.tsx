@@ -21,7 +21,10 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
     setCargando(true)
     try {
       const pagoConsulta = await consultarPago(cuenta.niu)
-      await db.cuentas.update(cuenta.id!, { pagoConsulta })
+      // El consumo del mes de la última factura queda como promedio de consumo (solo si el portal lo dio).
+      const cambios: Partial<Cuenta> = { pagoConsulta }
+      if (pagoConsulta.consumoKwh !== null) cambios.promedio = String(pagoConsulta.consumoKwh)
+      await db.cuentas.update(cuenta.id!, cambios)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo consultar')
     }

@@ -14,6 +14,7 @@ export interface Credenciales {
 export interface ResultadoPago {
   adeudado: number | null // solo si no está al día: suma de las facturas pendientes
   periodosPendientes: string[]
+  consumoKwh: number | null // consumo del mes según la última factura
   valorPagado: string | null // valor del último pago, tal cual lo da el portal
   ultimoPago: string // texto tal cual lo da el portal, o 'Sin pagos registrados'
   alDia: boolean
@@ -86,6 +87,7 @@ export async function consultarPago(niu: string): Promise<ResultadoPago> {
     valorPagado: data.valorPagado ?? null,
     adeudado: data.adeudado ?? null,
     periodosPendientes: (data.facturasPendientes ?? []).map((f: { periodo: string }) => f.periodo),
+    consumoKwh: typeof data.consumoKwh === 'number' ? data.consumoKwh : null,
     alDia: !!data.alDia,
     consultadoEn: Date.now(),
   }
