@@ -8,7 +8,7 @@ import { useConfigEstados } from './estadosConfig'
 import { useAtras } from './atras'
 import { comprimirFoto } from './imagen'
 import Visor from './Visor'
-import { colorEfectivo, esNuevo } from './util'
+import { colorEfectivo, esNuevo, etiquetaMes } from './util'
 
 // La ubicación se guarda sola cuando el GPS tiene una precisión mejor (menor) a este valor, en metros.
 const PRECISION_MAX = 6
@@ -54,8 +54,13 @@ export default function Ficha({ cuenta, vereda }: { cuenta: Cuenta; vereda?: str
 
       <div className="fila2">
         <label className="bloque">
-          Promedio consumo
+          Consumo del mes
           <TextoGuardado valor={cuenta.promedio} inputMode="decimal" placeholder="kWh" onGuardar={(v) => guardar({ promedio: v })} />
+          {cuenta.consumos?.length ? (
+            <span className="consumos">
+              {cuenta.consumos.map((c) => `${etiquetaMes(c.mes)} ${c.kwh}`).join(' · ')} kWh
+            </span>
+          ) : null}
         </label>
         <Ubicacion cuenta={cuenta} onGuardar={guardar} />
       </div>

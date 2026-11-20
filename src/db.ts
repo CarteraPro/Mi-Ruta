@@ -47,7 +47,7 @@ export interface Cuenta {
   anulada?: boolean // ya no viene en el Excel de la empresa (matrícula anulada)
   nuevoHasta?: number // marca "NUEVO" hasta esta fecha (15 días tras cargarla desde un Excel)
   manual?: boolean // agregada a mano: nunca se anula por no venir en el Excel
-  consumos?: { mes: string; kwh: number }[] // consumo del mes (según la factura) de los últimos 3 meses consultados
+  consumos?: { mes: string; kwh: number }[] // consumo de los últimos 3 meses consultados: un valor por mes (0 = sin consumo)
   pagoConsulta?: { ultimoPago: string; valorPagado?: string | null; adeudado?: number | null; periodosPendientes?: string[]; consumoKwh?: number | null; alDia: boolean; consultadoEn: number } // última consulta al portal Oracle
 }
 

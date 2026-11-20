@@ -22,7 +22,7 @@ export default function ConsultaPago({ cuenta }: { cuenta: Cuenta }) {
     setCargando(true)
     try {
       const pagoConsulta = await consultarPago(cuenta.niu)
-      // Guarda el resultado y suma el consumo de este mes al historial de 3 meses (el promedio se recalcula).
+      // Guarda el resultado y el consumo de este mes en el historial de 3 meses (un valor por mes).
       await db.cuentas.update(cuenta.id!, cambiosDeConsulta(cuenta, pagoConsulta))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo consultar')

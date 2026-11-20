@@ -99,6 +99,11 @@ export const coincideNota = (nota: string, terminos: string[]) => {
 
 export const esNuevo =(c: Cuenta) => !!c.nuevoHasta && Date.now() < c.nuevoHasta
 
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+// '2026-11' → 'Nov', para mostrar el historial de consumo mes a mes.
+export const etiquetaMes = (mes: string) => MESES_CORTOS[Number(mes.slice(5, 7)) - 1] ?? mes
+
 // La dirección suele traer prefijos ("Vr", "Br"), así que basta con que contenga el nombre.
 export const distinta = (vereda: string | null, direccion: string) =>
   !!vereda && !direccion.toLowerCase().includes(vereda.trim().toLowerCase())

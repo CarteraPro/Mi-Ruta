@@ -71,6 +71,7 @@ dd { margin: 0; font-size: 1.05rem; font-weight: 600; word-break: break-word; li
 .fila2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; flex: none; }
 .fila2 label { font-size: 0.75rem; }
 .fila2 input { margin-top: 2px; padding: 8px 10px; }
+.consumos { display: block; margin-top: 2px; font-size: 0.7rem; line-height: 1.2; }
 .ubic { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .coords { color: var(--verde); font-weight: 600; font-size: 0.75rem; text-align: center; }
 .ubic .error { font-size: 0.75rem; margin: 0; }

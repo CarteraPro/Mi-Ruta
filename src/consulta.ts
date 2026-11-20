@@ -1,7 +1,7 @@
 import { db, type Cuenta } from './db'
 import { aResultado, BACKEND_URL, leerCredenciales, type ResultadoPago } from './pagoOracle'
 
-const MESES_PROMEDIO = 3
+const MESES_CONSUMO = 3
 
 export const claveMes = (t: number) => {
   const d = new Date(t)
@@ -11,20 +11,21 @@ export const claveMes = (t: number) => {
 // Se considera consultada si la última consulta de esa cuenta fue en el mes actual.
 export const consultadaEsteMes = (c: Cuenta) => !!c.pagoConsulta && claveMes(c.pagoConsulta.consultadoEn) === claveMes(Date.now())
 
-// Cambios que deja una consulta en la cuenta: el resultado, el consumo de este mes en el historial
-// (se conservan los 3 meses más recientes) y el promedio de consumo = promedio de esos meses.
+// Cambios que deja una consulta en la cuenta: el resultado del portal y el consumo de ESTE mes en el
+// historial (un valor por mes, los 3 más recientes). Si la consulta no trae consumo, el mes queda en 0.
 export function cambiosDeConsulta(cuenta: Cuenta, pago: ResultadoPago): Partial<Cuenta> {
-  const cambios: Partial<Cuenta> = { pagoConsulta: pago }
-  if (pago.consumoKwh !== null) {
-    const mes = claveMes(pago.consultadoEn)
-    const consumos = [...(cuenta.consumos ?? []).filter((x) => x.mes !== mes), { mes, kwh: pago.consumoKwh }]
-      .sort((a, b) => b.mes.localeCompare(a.mes))
-      .slice(0, MESES_PROMEDIO)
-    const prom = consumos.reduce((s, x) => s + x.kwh, 0) / consumos.length
-    cambios.consumos = consumos
-    cambios.promedio = String(Math.round(prom * 10) / 10)
+  const mes = claveMes(pago.consultadoEn)
+  const kwh = pago.consumoKwh ?? 0
+  // Un solo valor por mes: si se vuelve a consultar el mismo mes, se reemplaza.
+  const consumos = [...(cuenta.consumos ?? []).filter((x) => x.mes !== mes), { mes, kwh }]
+    .sort((a, b) => b.mes.localeCompare(a.mes))
+    .slice(0, MESES_CONSUMO)
+  return {
+    pagoConsulta: pago,
+    consumos,
+    // Se muestra el consumo de este mes, no el promedio de los meses guardados.
+    promedio: String(kwh),
   }
-  return cambios
 }
 
 // ---- Consultar toda la ruta (continúa donde quedó: solo consulta a quienes faltan este mes) ----
